@@ -1,349 +1,2455 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Refined Gold Overhaul Wiki</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    /* Scrollbar personnalisée */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #161822; }
-    ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #f0c040; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
+import { useState, useEffect, useRef } from "react";
 
-  <script type="text/babel">
-    const { useState } = React;
+// ═══════════════════════════════════════════════════════════════
+// REFINED GOLD OVERHAUL — Wild Encounter Wiki
+// Based on RefinedPlat's changelog v4.2
+// ═══════════════════════════════════════════════════════════════
 
-    // --- 1. COULEURS ET TYPES ---
-    const TYPE_COLORS = {
-      Normal: "#A8A77A", Fire: "#EE8130", Water: "#6390F0", Electric: "#F7D02C",
-      Grass: "#7AC74C", Ice: "#96D9D6", Fighting: "#C22E28", Poison: "#A33EA1",
-      Ground: "#E2BF65", Flying: "#A98FF3", Psychic: "#F95587", Bug: "#A6B91A",
-      Rock: "#B6A136", Ghost: "#735797", Dragon: "#6F35FC", Dark: "#705746",
-      Steel: "#B7B7CE", Fairy: "#D685AD",
-    };
+// --- TYPE COLORS ---
+const TYPE_COLORS = {
+  Normal: "#A8A77A", Fire: "#EE8130", Water: "#6390F0", Electric: "#F7D02C",
+  Grass: "#7AC74C", Ice: "#96D9D6", Fighting: "#C22E28", Poison: "#A33EA1",
+  Ground: "#E2BF65", Flying: "#A98FF3", Psychic: "#F95587", Bug: "#A6B91A",
+  Rock: "#B6A136", Ghost: "#735797", Dragon: "#6F35FC", Dark: "#705746",
+  Steel: "#B7B7CE", Fairy: "#D685AD",
+};
 
-    const POKEMON_TYPES = {
-      Butterfree:"Bug",Beedrill:"Bug",Caterpie:"Bug",Weedle:"Bug",Metapod:"Bug",Kakuna:"Bug",
-      Pidgey:"Flying",Pidgeotto:"Flying",Pidgeot:"Flying",Rattata:"Normal",Raticate:"Normal",
-      Spearow:"Flying",Fearow:"Flying",Ekans:"Poison",Arbok:"Poison",Pikachu:"Electric",
-      Raichu:"Electric",Sandshrew:"Ground",Sandslash:"Ground",NidoranF:"Poison",Nidorina:"Poison",
-      Nidoqueen:"Poison",NidoranM:"Poison",Nidorino:"Poison",Nidoking:"Poison",Clefairy:"Fairy",
-      Clefable:"Fairy",Vulpix:"Fire",Ninetales:"Fire",Jigglypuff:"Normal",Wigglytuff:"Normal",
-      Zubat:"Poison",Golbat:"Poison",Oddish:"Grass",Gloom:"Grass",Vileplume:"Grass",
-      Paras:"Bug",Parasect:"Bug",Venonat:"Bug",Venomoth:"Bug",Diglett:"Ground",Dugtrio:"Ground",
-      Meowth:"Normal",Persian:"Normal",Psyduck:"Water",Golduck:"Water",Mankey:"Fighting",
-      Primeape:"Fighting",Growlithe:"Fire",Arcanine:"Fire",Poliwag:"Water",Poliwhirl:"Water",
-      Poliwrath:"Water",Politoed:"Water",Abra:"Psychic",Kadabra:"Psychic",Alakazam:"Psychic",
-      Machop:"Fighting",Machoke:"Fighting",Machamp:"Fighting",Bellsprout:"Grass",Weepinbell:"Grass",
-      Victreebel:"Grass",Tentacool:"Water",Tentacruel:"Water",Geodude:"Rock",Graveler:"Rock",
-      Golem:"Rock",Ponyta:"Fire",Rapidash:"Fire",Slowpoke:"Psychic",Slowbro:"Psychic",
-      Magnemite:"Electric",Magneton:"Electric",Magnezone:"Electric","Farfetch'd":"Flying",
-      Farfetch_d:"Flying",Doduo:"Normal",Dodrio:"Normal",Seel:"Water",Dewgong:"Water",
-      Grimer:"Poison",Muk:"Poison",Shellder:"Water",Cloyster:"Water",Gastly:"Ghost",
-      Haunter:"Ghost",Gengar:"Ghost",Onix:"Rock",Drowzee:"Psychic",Hypno:"Psychic",
-      Krabby:"Water",Kingler:"Water",Voltorb:"Electric",Electrode:"Electric",Exeggcute:"Grass",
-      Exeggutor:"Grass",Marowak:"Ground",Hitmonchan:"Fighting",Hitmonlee:"Fighting",
-      Hitmontop:"Fighting",Lickitung:"Normal",Koffing:"Poison",Weezing:"Poison",Rhyhorn:"Ground",
-      Rhydon:"Ground",Rhyperior:"Ground",Chansey:"Normal",Tangela:"Grass",Tangrowth:"Grass",
-      Kangaskhan:"Normal",Horsea:"Water",Seadra:"Water",Kingdra:"Water",Goldeen:"Water",
-      Seaking:"Water",Staryu:"Water",Starmie:"Water","Mr. Mime":"Psychic",Scyther:"Bug",
-      Scizor:"Bug",Jynx:"Ice",Electabuzz:"Electric",Electivire:"Electric",Magmar:"Fire",
-      Magmortar:"Fire",Pinsir:"Bug",Tauros:"Normal",Magikarp:"Water",Gyarados:"Water",
-      Lapras:"Water",Ditto:"Normal",Eevee:"Normal",Vaporeon:"Water",Jolteon:"Electric",
-      Flareon:"Fire",Porygon:"Normal",Omanyte:"Rock",Omastar:"Rock",Kabuto:"Rock",
-      Kabutops:"Rock",Aerodactyl:"Rock",Snorlax:"Normal",Dratini:"Dragon",Dragonair:"Dragon",
-      Dragonite:"Dragon",Chikorita:"Grass",Bayleef:"Grass",Meganium:"Grass",Cyndaquil:"Fire",
-      Quilava:"Fire",Typhlosion:"Fire",Totodile:"Water",Croconaw:"Water",Feraligatr:"Water",
-      Sentret:"Normal",Furret:"Normal",Hoothoot:"Normal",Noctowl:"Normal",Ledyba:"Bug",
-      Ledian:"Bug",Spinarak:"Bug",Ariados:"Bug",Crobat:"Poison",Chinchou:"Water",Lanturn:"Water",
-      Pichu:"Electric",Cleffa:"Fairy",Igglybuff:"Normal",Togepi:"Fairy",Togetic:"Fairy",
-      Natu:"Psychic",Xatu:"Psychic",Mareep:"Electric",Flaaffy:"Electric",Ampharos:"Electric",
-      Bellossom:"Grass",Marill:"Water",Azumarill:"Water",Sudowoodo:"Rock",Hoppip:"Grass",
-      Skiploom:"Grass",Jumpluff:"Grass",Aipom:"Normal",Sunkern:"Grass",Sunflora:"Grass",
-      Yanma:"Bug",Wooper:"Water",Quagsire:"Water",Espeon:"Psychic",Umbreon:"Dark",
-      Murkrow:"Dark",Slowking:"Psychic",Misdreavus:"Ghost",Mismagius:"Ghost",Unown:"Psychic",
-      Wobbuffet:"Psychic",Girafarig:"Normal",Pineco:"Bug",Forretress:"Bug",Dunsparce:"Normal",
-      Gligar:"Ground",Gliscor:"Ground",Steelix:"Steel",Snubbull:"Fairy",Granbull:"Fairy",
-      Qwilfish:"Water",Shuckle:"Bug",Heracross:"Bug",Sneasel:"Dark",Weavile:"Dark",
-      Teddiursa:"Normal",Ursaring:"Normal",Slugma:"Fire",Magcargo:"Fire",Swinub:"Ice",
-      Piloswine:"Ice",Mamoswine:"Ice",Corsola:"Water",Remoraid:"Water",Octillery:"Water",
-      Delibird:"Ice",Mantine:"Water",Skarmory:"Steel",Houndour:"Dark",Houndoom:"Dark",
-      Phanpy:"Ground",Donphan:"Ground",Stantler:"Normal",Smeargle:"Normal",Tyrogue:"Fighting",
-      Miltank:"Normal",Larvitar:"Rock",Pupitar:"Rock",Tyranitar:"Rock",
-      Poochyena:"Dark",Mightyena:"Dark",Zigzagoon:"Normal",Linoone:"Normal",Wurmple:"Bug",
-      Beautifly:"Bug",Dustox:"Bug",Lotad:"Water",Lombre:"Water",Ludicolo:"Water",
-      Seedot:"Grass",Nuzleaf:"Grass",Shiftry:"Grass",Swellow:"Flying",Surskit:"Bug",
-      Masquerain:"Bug",Shroomish:"Grass",Breloom:"Grass",Slakoth:"Normal",Vigoroth:"Normal",
-      Slaking:"Normal",Nincada:"Bug",Ninjask:"Bug",Shedinja:"Bug",Whismur:"Normal",
-      Loudred:"Normal",Exploud:"Normal",Makuhita:"Fighting",Hariyama:"Fighting",
-      Skitty:"Normal",Delcatty:"Normal",Sableye:"Dark",Mawile:"Steel",Aron:"Steel",
-      Lairon:"Steel",Aggron:"Steel",Meditite:"Fighting",Medicham:"Fighting",Electrike:"Electric",
-      Manectric:"Electric",Plusle:"Electric",Minun:"Electric",Volbeat:"Bug",Illumise:"Bug",
-      Roselia:"Grass",Gulpin:"Poison",Swalot:"Poison",Carvanha:"Water",Sharpedo:"Water",
-      Wailmer:"Water",Wailord:"Water",Numel:"Fire",Camerupt:"Fire",Torkoal:"Fire",Spoink:"Psychic",
-      Grumpig:"Psychic",Spinda:"Normal",Trapinch:"Ground",Vibrava:"Ground",Flygon:"Ground",
-      Cacnea:"Grass",Cacturne:"Grass",Swablu:"Normal",Altaria:"Dragon",Zangoose:"Normal",
-      Seviper:"Poison",Lunatone:"Rock",Solrock:"Rock",Barboach:"Water",Whiscash:"Water",
-      Corphish:"Water",Crawdaunt:"Water",Baltoy:"Ground",Claydol:"Ground",Lileep:"Rock",
-      Cradily:"Rock",Anorith:"Rock",Armaldo:"Rock",Feebas:"Water",Milotic:"Water",
-      Castform:"Normal",Kecleon:"Normal",Shuppet:"Ghost",Banette:"Ghost",Duskull:"Ghost",
-      Dusclops:"Ghost",Tropius:"Grass",Chimecho:"Psychic",Absol:"Dark",
-      Snorunt:"Ice",Glalie:"Ice",Spheal:"Ice",Sealeo:"Ice",Walrein:"Ice",Clamperl:"Water",
-      Huntail:"Water",Gorebyss:"Water",Relicanth:"Water",Luvdisc:"Water",Beldum:"Steel",Metang:"Steel",Metagross:"Steel",
-      Shelgon:"Dragon",Salamence:"Dragon",Turtwig:"Grass",Grotle:"Grass",Torterra:"Grass",Chimchar:"Fire",Monferno:"Fire",Infernape:"Fire",
-      Piplup:"Water",Prinplup:"Water",Empoleon:"Water",Staravia:"Flying",Staraptor:"Flying",Bidoof:"Normal",Bibarel:"Normal",
-      Kricketot:"Bug",Kricketune:"Bug",Shinx:"Electric",Luxio:"Electric",Luxray:"Electric",Budew:"Grass",Roserade:"Grass",
-      Cranidos:"Rock",Rampardos:"Rock",Shieldon:"Rock",Bastiodon:"Rock",Burmy:"Bug",Wormadam:"Bug",Mothim:"Bug",
-      Combee:"Bug",Vespiquen:"Bug",Pachirisu:"Electric",Buizel:"Water",Floatzel:"Water",Cherubi:"Grass",Cherrim:"Grass",
-      Shellos:"Water",Gastrodon:"Water",Ambipom:"Normal",Drifloon:"Ghost",Drifblim:"Ghost",Buneary:"Normal",Lopunny:"Normal",
-      Honchkrow:"Dark",Glameow:"Normal",Purugly:"Normal",Chingling:"Psychic",Stunky:"Poison",Skuntank:"Poison",
-      Bronzor:"Steel",Bronzong:"Steel",Happiny:"Normal",Chatot:"Flying",Spiritomb:"Ghost",
-      Gible:"Dragon",Gabite:"Dragon",Garchomp:"Dragon",Munchlax:"Normal",Riolu:"Fighting",Lucario:"Fighting",
-      Hippopotas:"Ground",Hippowdon:"Ground",Skorupi:"Poison",Drapion:"Poison",Croagunk:"Poison",Toxicroak:"Poison",
-      Carnivine:"Grass",Finneon:"Water",Lumineon:"Water",Mantyke:"Water",Snover:"Grass",Abomasnow:"Grass",
-      Weavile:"Dark",Magnezone:"Electric",Electivire:"Electric",Magmortar:"Fire",Togekiss:"Fairy",
-      Yanmega:"Bug",Leafeon:"Grass",Glaceon:"Ice",Gliscor:"Ground",Mamoswine:"Ice",
-      Porygon2:"Normal",PorygonZ:"Normal",Rhyperior:"Ground",Tangrowth:"Grass",
-      Probopass:"Rock",Dusknoir:"Ghost",Froslass:"Ice",Rotom:"Electric",
-      Nosepass:"Rock",Pelipper:"Water",Wingull:"Water",Mismagius:"Ghost",
-      Politoed:"Water",Kirlia:"Psychic",Ralts:"Psychic",Gardevoir:"Psychic",
-      Sceptile:"Grass",Blaziken:"Fire",Swampert:"Water"
-    };
+const POKEMON_TYPES = {
+  Butterfree:"Bug",Beedrill:"Bug",Caterpie:"Bug",Weedle:"Bug",Metapod:"Bug",Kakuna:"Bug",
+  Pidgey:"Flying",Pidgeotto:"Flying",Pidgeot:"Flying",Rattata:"Normal",Raticate:"Normal",
+  Spearow:"Flying",Fearow:"Flying",Ekans:"Poison",Arbok:"Poison",Pikachu:"Electric",
+  Raichu:"Electric",Sandshrew:"Ground",Sandslash:"Ground",NidoranF:"Poison",Nidorina:"Poison",
+  Nidoqueen:"Poison",NidoranM:"Poison",Nidorino:"Poison",Nidoking:"Poison",Clefairy:"Fairy",
+  Clefable:"Fairy",Vulpix:"Fire",Ninetales:"Fire",Jigglypuff:"Normal",Wigglytuff:"Normal",
+  Zubat:"Poison",Golbat:"Poison",Oddish:"Grass",Gloom:"Grass",Vileplume:"Grass",
+  Paras:"Bug",Parasect:"Bug",Venonat:"Bug",Venomoth:"Bug",Diglett:"Ground",Dugtrio:"Ground",
+  Meowth:"Normal",Persian:"Normal",Psyduck:"Water",Golduck:"Water",Mankey:"Fighting",
+  Primeape:"Fighting",Growlithe:"Fire",Arcanine:"Fire",Poliwag:"Water",Poliwhirl:"Water",
+  Poliwrath:"Water",Politoed:"Water",Abra:"Psychic",Kadabra:"Psychic",Alakazam:"Psychic",
+  Machop:"Fighting",Machoke:"Fighting",Machamp:"Fighting",Bellsprout:"Grass",Weepinbell:"Grass",
+  Victreebel:"Grass",Tentacool:"Water",Tentacruel:"Water",Geodude:"Rock",Graveler:"Rock",
+  Golem:"Rock",Ponyta:"Fire",Rapidash:"Fire",Slowpoke:"Psychic",Slowbro:"Psychic",
+  Magnemite:"Electric",Magneton:"Electric",Magnezone:"Electric","Farfetch'd":"Flying",
+  Farfetch_d:"Flying",Doduo:"Normal",Dodrio:"Normal",Seel:"Water",Dewgong:"Water",
+  Grimer:"Poison",Muk:"Poison",Shellder:"Water",Cloyster:"Water",Gastly:"Ghost",
+  Haunter:"Ghost",Gengar:"Ghost",Onix:"Rock",Drowzee:"Psychic",Hypno:"Psychic",
+  Krabby:"Water",Kingler:"Water",Voltorb:"Electric",Electrode:"Electric",Exeggcute:"Grass",
+  Exeggutor:"Grass",Marowak:"Ground",Hitmonchan:"Fighting",Hitmonlee:"Fighting",
+  Hitmontop:"Fighting",Lickitung:"Normal",Koffing:"Poison",Weezing:"Poison",Rhyhorn:"Ground",
+  Rhydon:"Ground",Rhyperior:"Ground",Chansey:"Normal",Tangela:"Grass",Tangrowth:"Grass",
+  Kangaskhan:"Normal",Horsea:"Water",Seadra:"Water",Kingdra:"Water",Goldeen:"Water",
+  Seaking:"Water",Staryu:"Water",Starmie:"Water","Mr. Mime":"Psychic",Scyther:"Bug",
+  Scizor:"Bug",Jynx:"Ice",Electabuzz:"Electric",Electivire:"Electric",Magmar:"Fire",
+  Magmortar:"Fire",Pinsir:"Bug",Tauros:"Normal",Magikarp:"Water",Gyarados:"Water",
+  Lapras:"Water",Ditto:"Normal",Eevee:"Normal",Vaporeon:"Water",Jolteon:"Electric",
+  Flareon:"Fire",Porygon:"Normal",Omanyte:"Rock",Omastar:"Rock",Kabuto:"Rock",
+  Kabutops:"Rock",Aerodactyl:"Rock",Snorlax:"Normal",Dratini:"Dragon",Dragonair:"Dragon",
+  Dragonite:"Dragon",Chikorita:"Grass",Bayleef:"Grass",Meganium:"Grass",Cyndaquil:"Fire",
+  Quilava:"Fire",Typhlosion:"Fire",Totodile:"Water",Croconaw:"Water",Feraligatr:"Water",
+  Sentret:"Normal",Furret:"Normal",Hoothoot:"Normal",Noctowl:"Normal",Ledyba:"Bug",
+  Ledian:"Bug",Spinarak:"Bug",Ariados:"Bug",Crobat:"Poison",Chinchou:"Water",Lanturn:"Water",
+  Pichu:"Electric",Cleffa:"Fairy",Igglybuff:"Normal",Togepi:"Fairy",Togetic:"Fairy",
+  Natu:"Psychic",Xatu:"Psychic",Mareep:"Electric",Flaaffy:"Electric",Ampharos:"Electric",
+  Bellossom:"Grass",Marill:"Water",Azumarill:"Water",Sudowoodo:"Rock",Hoppip:"Grass",
+  Skiploom:"Grass",Jumpluff:"Grass",Aipom:"Normal",Sunkern:"Grass",Sunflora:"Grass",
+  Yanma:"Bug",Wooper:"Water",Quagsire:"Water",Espeon:"Psychic",Umbreon:"Dark",
+  Murkrow:"Dark",Slowking:"Psychic",Misdreavus:"Ghost",Mismagius:"Ghost",Unown:"Psychic",
+  Wobbuffet:"Psychic",Girafarig:"Normal",Pineco:"Bug",Forretress:"Bug",Dunsparce:"Normal",
+  Gligar:"Ground",Gliscor:"Ground",Steelix:"Steel",Snubbull:"Fairy",Granbull:"Fairy",
+  Qwilfish:"Water",Shuckle:"Bug",Heracross:"Bug",Sneasel:"Dark",Weavile:"Dark",
+  Teddiursa:"Normal",Ursaring:"Normal",Slugma:"Fire",Magcargo:"Fire",Swinub:"Ice",
+  Piloswine:"Ice",Mamoswine:"Ice",Corsola:"Water",Remoraid:"Water",Octillery:"Water",
+  Delibird:"Ice",Mantine:"Water",Skarmory:"Steel",Houndour:"Dark",Houndoom:"Dark",
+  Phanpy:"Ground",Donphan:"Ground",Stantler:"Normal",Smeargle:"Normal",Tyrogue:"Fighting",
+  Miltank:"Normal",Larvitar:"Rock",Pupitar:"Rock",Tyranitar:"Rock",
+  Poochyena:"Dark",Mightyena:"Dark",Zigzagoon:"Normal",Linoone:"Normal",Wurmple:"Bug",
+  Beautifly:"Bug",Dustox:"Bug",Lotad:"Water",Lombre:"Water",Ludicolo:"Water",
+  Seedot:"Grass",Nuzleaf:"Grass",Shiftry:"Grass",Swellow:"Flying",Surskit:"Bug",
+  Masquerain:"Bug",Shroomish:"Grass",Breloom:"Grass",Slakoth:"Normal",Vigoroth:"Normal",
+  Slaking:"Normal",Nincada:"Bug",Ninjask:"Bug",Shedinja:"Bug",Whismur:"Normal",
+  Loudred:"Normal",Exploud:"Normal",Makuhita:"Fighting",Hariyama:"Fighting",
+  Skitty:"Normal",Delcatty:"Normal",Sableye:"Dark",Mawile:"Steel",Aron:"Steel",
+  Lairon:"Steel",Aggron:"Steel",Meditite:"Fighting",Medicham:"Fighting",Electrike:"Electric",
+  Manectric:"Electric",Plusle:"Electric",Minun:"Electric",Volbeat:"Bug",Illumise:"Bug",
+  Roselia:"Grass",Gulpin:"Poison",Swalot:"Poison",Carvanha:"Water",Sharpedo:"Water",
+  Wailmer:"Water",Wailord:"Water",Numel:"Fire",Camerupt:"Fire",Torkoal:"Fire",Spoink:"Psychic",
+  Grumpig:"Psychic",Spinda:"Normal",Trapinch:"Ground",Vibrava:"Ground",Flygon:"Ground",
+  Cacnea:"Grass",Cacturne:"Grass",Swablu:"Normal",Altaria:"Dragon",Zangoose:"Normal",
+  Seviper:"Poison",Lunatone:"Rock",Solrock:"Rock",Barboach:"Water",Whiscash:"Water",
+  Corphish:"Water",Crawdaunt:"Water",Baltoy:"Ground",Claydol:"Ground",Lileep:"Rock",
+  Cradily:"Rock",Anorith:"Rock",Armaldo:"Rock",Feebas:"Water",Milotic:"Water",
+  Castform:"Normal",Kecleon:"Normal",Shuppet:"Ghost",Banette:"Ghost",Duskull:"Ghost",
+  Dusclops:"Ghost",Dusknoir:"Ghost",Tropius:"Grass",Chimecho:"Psychic",Absol:"Dark",
+  Snorunt:"Ice",Glalie:"Ice",Froslass:"Ice",Spheal:"Ice",Sealeo:"Ice",Walrein:"Ice",
+  Clamperl:"Water",Huntail:"Water",Gorebyss:"Water",Relicanth:"Water",Luvdisc:"Water",
+  Beldum:"Steel",Metang:"Steel",Metagross:"Steel",Shelgon:"Dragon",Salamence:"Dragon",
+  Turtwig:"Grass",Grotle:"Grass",Torterra:"Grass",Chimchar:"Fire",Monferno:"Fire",
+  Infernape:"Fire",Piplup:"Water",Prinplup:"Water",Empoleon:"Water",Staravia:"Flying",
+  Staraptor:"Flying",Bidoof:"Normal",Bibarel:"Normal",Kricketot:"Bug",Kricketune:"Bug",
+  Shinx:"Electric",Luxio:"Electric",Luxray:"Electric",Budew:"Grass",Roserade:"Grass",
+  Cranidos:"Rock",Rampardos:"Rock",Shieldon:"Rock",Bastiodon:"Rock",Burmy:"Bug",
+  Wormadam:"Bug",Mothim:"Bug",Combee:"Bug",Vespiquen:"Bug",Pachirisu:"Electric",
+  Buizel:"Water",Floatzel:"Water",Cherubi:"Grass",Cherrim:"Grass",Shellos:"Water",
+  Gastrodon:"Water",Ambipom:"Normal",Drifloon:"Ghost",Drifblim:"Ghost",Buneary:"Normal",
+  Lopunny:"Normal",Honchkrow:"Dark",Glameow:"Normal",Purugly:"Normal",Chingling:"Psychic",
+  Stunky:"Poison",Skuntank:"Poison",Bronzor:"Steel",Bronzong:"Steel",Mime_Jr:"Psychic",
+  Happiny:"Normal",Chatot:"Flying",Spiritomb:"Ghost",Gible:"Dragon",Gabite:"Dragon",
+  Garchomp:"Dragon",Munchlax:"Normal",Riolu:"Fighting",Lucario:"Fighting",Hippopotas:"Ground",
+  Hippowdon:"Ground",Skorupi:"Poison",Drapion:"Poison",Croagunk:"Poison",Toxicroak:"Poison",
+  Carnivine:"Grass",Finneon:"Water",Lumineon:"Water",Mantyke:"Water",Snover:"Grass",
+  Abomasnow:"Grass",Rotom:"Electric",Porygon2:"Normal",PorygonZ:"Normal",
+  Nosepass:"Rock",Probopass:"Rock",Pelipper:"Water",Wingull:"Water",
+  Venusaur:"Grass",Charizard:"Fire",Blastoise:"Water",
+  Sceptile:"Grass",Blaziken:"Fire",Swampert:"Water",
+  Treecko:"Grass",Torchic:"Fire",Mudkip:"Water",
+  Gardevoir:"Psychic",Kirlia:"Psychic",Ralts:"Psychic",
+  Dusknoir:"Ghost",
+};
 
-    function getType(name) {
-      const clean = name.replace(/[^a-zA-Z]/g, "");
-      return POKEMON_TYPES[clean] || POKEMON_TYPES[name] || "Normal";
-    }
+function getTypeColor(name) {
+  const clean = name.replace(/[^a-zA-Z]/g, "");
+  const t = POKEMON_TYPES[clean] || POKEMON_TYPES[name] || "Normal";
+  return TYPE_COLORS[t] || TYPE_COLORS.Normal;
+}
+function getType(name) {
+  const clean = name.replace(/[^a-zA-Z]/g, "");
+  return POKEMON_TYPES[clean] || POKEMON_TYPES[name] || "Normal";
+}
 
-    // --- 2. OUTILS POUR LES SPRITES ANIMÉS ---
-    function cleanPokemonNameForUrl(name) {
-      if (!name) return "";
-      return name.toLowerCase()
-        .replace(/\s+/g, "")
-        .replace(/[^a-z0-9]/g, "")
-        .replace("♀", "f")
-        .replace("♂", "m");
-    }
+// ═══════════════════════════════════════════════════
+// ENCOUNTER DATA — parsed from the changelog
+// ═══════════════════════════════════════════════════
+const ENCOUNTER_DATA = {
+  // ─── JOHTO ROUTES ───
+  "Route 29": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Pidgey", rate: "50%", time: "Morning, Day" },
+      { pokemon: "Sentret", rate: "40%", time: "Morning, Day" },
+      { pokemon: "Hoppip", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Rattata", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Hoothoot", rate: "60%", time: "Night" },
+      { pokemon: "Rattata", rate: "35%", time: "Night" },
+      { pokemon: "Sentret", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Poochyena", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Swablu", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Swablu", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Ralts", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 30": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Caterpie", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Weedle", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Hoppip", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Ledyba", rate: "25%", time: "Morning" },
+      { pokemon: "Pidgey", rate: "10%", time: "Morning" },
+      { pokemon: "Rattata", rate: "5%", time: "Morning" },
+      { pokemon: "Poliwag", rate: "5%", time: "Morning" },
+      { pokemon: "Spinarak", rate: "5%", time: "Morning" },
+      { pokemon: "Pidgey", rate: "30%", time: "Day" },
+      { pokemon: "Kakuna", rate: "5%", time: "Day" },
+      { pokemon: "Metapod", rate: "5%", time: "Day" },
+      { pokemon: "Ledyba", rate: "5%", time: "Day" },
+      { pokemon: "Spinarak", rate: "5%", time: "Day" },
+      { pokemon: "Hoothoot", rate: "30%", time: "Night" },
+      { pokemon: "Rattata", rate: "30%", time: "Night" },
+      { pokemon: "Spinarak", rate: "25%", time: "Night" },
+      { pokemon: "Poliwag", rate: "10%", time: "Night" },
+      { pokemon: "Ledyba", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Whismur", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Zigzagoon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Buizel", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Bidoof", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 31": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Bellsprout", rate: "20%", time: "All" },
+      { pokemon: "Caterpie", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Weedle", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Hoppip", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Ledyba", rate: "20%", time: "Morning" },
+      { pokemon: "Pidgey", rate: "10%", time: "Morning" },
+      { pokemon: "Poliwag", rate: "5%", time: "Morning" },
+      { pokemon: "Pidgey", rate: "31%", time: "Day" },
+      { pokemon: "Phanpy", rate: "4%", time: "Day" },
+      { pokemon: "Spinarak", rate: "20%", time: "Night" },
+      { pokemon: "Poliwag", rate: "20%", time: "Night" },
+      { pokemon: "Rattata", rate: "20%", time: "Night" },
+      { pokemon: "Hoothoot", rate: "10%", time: "Night" },
+      { pokemon: "Caterpie", rate: "5%", time: "Night" },
+      { pokemon: "Weedle", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Whismur", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Zigzagoon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Buizel", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Bidoof", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 32": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Bellsprout", rate: "20%", time: "All" },
+      { pokemon: "Ekans", rate: "20%", time: "All" },
+      { pokemon: "Mareep", rate: "20%", time: "Morning" },
+      { pokemon: "Hoppip", rate: "20%", time: "Morning" },
+      { pokemon: "Rattata", rate: "15%", time: "Morning" },
+      { pokemon: "Zubat", rate: "5%", time: "Morning" },
+      { pokemon: "Mareep", rate: "20%", time: "Day" },
+      { pokemon: "Hoppip", rate: "20%", time: "Day" },
+      { pokemon: "Rattata", rate: "20%", time: "Day" },
+      { pokemon: "Wooper", rate: "30%", time: "Night" },
+      { pokemon: "Rattata", rate: "10%", time: "Night" },
+      { pokemon: "Mareep", rate: "10%", time: "Night" },
+      { pokemon: "Zubat", rate: "5%", time: "Night" },
+      { pokemon: "Hoppip", rate: "5%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Magikarp", rate: "70%", method: "Old Rod" },
+      { pokemon: "Tentacool", rate: "25%", method: "Old Rod" },
+      { pokemon: "Qwilfish", rate: "5%", method: "Old Rod" },
+      { pokemon: "Tentacool", rate: "45%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Qwilfish", rate: "15%", method: "Good Rod" },
+      { pokemon: "Tentacruel", rate: "40%", method: "Super Rod" },
+      { pokemon: "Tentacool", rate: "30%", method: "Super Rod" },
+      { pokemon: "Magikarp", rate: "20%", method: "Super Rod" },
+      { pokemon: "Qwilfish", rate: "15%", method: "Super Rod" },
+    ],
+    surfing: [
+      { pokemon: "Tentacool", rate: "60%", time: "All" },
+      { pokemon: "Tentacruel", rate: "30%", time: "All" },
+      { pokemon: "Quagsire", rate: "10%", time: "All" },
+    ],
+  },
+  "Route 33": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Ekans", rate: "20%", time: "All" },
+      { pokemon: "Wooper", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Spearow", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Psyduck", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Hoppip", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Rattata", rate: "20%", time: "Morning" },
+      { pokemon: "Zubat", rate: "5%", time: "Morning" },
+      { pokemon: "Rattata", rate: "25%", time: "Day" },
+      { pokemon: "Wooper", rate: "30%", time: "Night" },
+      { pokemon: "Zubat", rate: "25%", time: "Night" },
+      { pokemon: "Rattata", rate: "20%", time: "Night" },
+      { pokemon: "Psyduck", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Oddish", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Tropius", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Psyduck", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Croagunk", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 34": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Drowzee", rate: "40%", time: "All" },
+      { pokemon: "Rattata", rate: "20%", time: "All" },
+      { pokemon: "Abra", rate: "15%", time: "All" },
+      { pokemon: "Ditto", rate: "6%", time: "All" },
+      { pokemon: "Eevee", rate: "4%", time: "All" },
+      { pokemon: "Jigglypuff", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Grimer", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Grimer", rate: "10%", time: "Night" },
+      { pokemon: "Jigglypuff", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Whismur", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Zigzagoon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Buizel", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Bidoof", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 35": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Drowzee", rate: "25%", time: "All" },
+      { pokemon: "NidoranM", rate: "20%", time: "All" },
+      { pokemon: "NidoranF", rate: "20%", time: "All" },
+      { pokemon: "Pidgey", rate: "10%", time: "Morning" },
+      { pokemon: "Abra", rate: "15%", time: "Morning" },
+      { pokemon: "Ditto", rate: "6%", time: "Morning" },
+      { pokemon: "Yanma", rate: "4%", time: "Morning" },
+      { pokemon: "Pidgey", rate: "10%", time: "Day" },
+      { pokemon: "Abra", rate: "10%", time: "Day" },
+      { pokemon: "Yanma", rate: "11%", time: "Day" },
+      { pokemon: "Ditto", rate: "4%", time: "Day" },
+      { pokemon: "Hoothoot", rate: "10%", time: "Night" },
+      { pokemon: "Abra", rate: "15%", time: "Night" },
+      { pokemon: "Ditto", rate: "6%", time: "Night" },
+      { pokemon: "Yanma", rate: "4%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Whismur", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Zigzagoon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Buizel", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Bidoof", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 36": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "NidoranM", rate: "30%", time: "All" },
+      { pokemon: "NidoranF", rate: "28%", time: "All" },
+      { pokemon: "Stantler", rate: "5%", time: "All" },
+      { pokemon: "Yanma", rate: "2%", time: "All" },
+      { pokemon: "Growlithe", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Vulpix", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Pidgeotto", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Vulpix", rate: "15%", time: "Night" },
+      { pokemon: "Growlithe", rate: "10%", time: "Night" },
+      { pokemon: "Hoothoot", rate: "10%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Baltoy", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Beldum", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Gible", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Riolu", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 37": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Stantler", rate: "30%", time: "All" },
+      { pokemon: "Ledyba", rate: "20%", time: "Morning" },
+      { pokemon: "Growlithe", rate: "20%", time: "Morning" },
+      { pokemon: "Ledian", rate: "10%", time: "Morning" },
+      { pokemon: "Pidgeotto", rate: "10%", time: "Morning" },
+      { pokemon: "Pidgey", rate: "5%", time: "Morning" },
+      { pokemon: "Vulpix", rate: "5%", time: "Morning" },
+      { pokemon: "Pidgey", rate: "30%", time: "Day" },
+      { pokemon: "Growlithe", rate: "20%", time: "Day" },
+      { pokemon: "Pidgeotto", rate: "15%", time: "Day" },
+      { pokemon: "Vulpix", rate: "5%", time: "Day" },
+      { pokemon: "Spinarak", rate: "20%", time: "Night" },
+      { pokemon: "Vulpix", rate: "20%", time: "Night" },
+      { pokemon: "Ariados", rate: "10%", time: "Night" },
+      { pokemon: "Hoothoot", rate: "10%", time: "Night" },
+      { pokemon: "Noctowl", rate: "5%", time: "Night" },
+      { pokemon: "Growlithe", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Baltoy", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Beldum", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Gible", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Riolu", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 38": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Furret", rate: "20%", time: "All" },
+      { pokemon: "Magnemite", rate: "24%", time: "All" },
+      { pokemon: "Miltank", rate: "6%", time: "All" },
+      { pokemon: "Tauros", rate: "5%", time: "All" },
+      { pokemon: "Snubbull", rate: "5%", time: "All" },
+      { pokemon: "Meowth", rate: "30%", time: "Morning, Day" },
+      { pokemon: "Farfetch'd", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Meowth", rate: "40%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Plusle", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Minun", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Luxio", rate: "40%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 39": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Furret", rate: "20%", time: "All" },
+      { pokemon: "Magnemite", rate: "20%", time: "All" },
+      { pokemon: "Tauros", rate: "14%", time: "All" },
+      { pokemon: "Miltank", rate: "14%", time: "All" },
+      { pokemon: "Snubbull", rate: "2%", time: "All" },
+      { pokemon: "Meowth", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Farfetch'd", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Meowth", rate: "30%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Plusle", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Minun", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Luxio", rate: "40%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 42": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Mankey", rate: "30%", time: "All" },
+      { pokemon: "Mareep", rate: "30%", time: "All" },
+      { pokemon: "Flaaffy", rate: "10%", time: "All" },
+      { pokemon: "Scyther", rate: "4%", time: "All" },
+      { pokemon: "Marill", rate: "2%", time: "All" },
+      { pokemon: "Spearow", rate: "25%", time: "Morning" },
+      { pokemon: "Murkrow", rate: "5%", time: "Morning" },
+      { pokemon: "Fearow", rate: "4%", time: "Morning" },
+      { pokemon: "Spearow", rate: "30%", time: "Day" },
+      { pokemon: "Fearow", rate: "4%", time: "Day" },
+      { pokemon: "Zubat", rate: "20%", time: "Night" },
+      { pokemon: "Murkrow", rate: "10%", time: "Night" },
+      { pokemon: "Golbat", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Zangoose", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Seviper", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Munchlax", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Tyrogue", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 43": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Girafarig", rate: "30%", time: "All" },
+      { pokemon: "Swinub", rate: "20%", time: "All" },
+      { pokemon: "Flaaffy", rate: "10%", time: "All" },
+      { pokemon: "Pinsir", rate: "4%", time: "All" },
+      { pokemon: "Fearow", rate: "20%", time: "Morning" },
+      { pokemon: "Venonat", rate: "6%", time: "Morning" },
+      { pokemon: "Mareep", rate: "5%", time: "Morning" },
+      { pokemon: "Murkrow", rate: "5%", time: "Morning" },
+      { pokemon: "Fearow", rate: "20%", time: "Day" },
+      { pokemon: "Jynx", rate: "10%", time: "Day" },
+      { pokemon: "Mareep", rate: "6%", time: "Day" },
+      { pokemon: "Venonat", rate: "16%", time: "Night" },
+      { pokemon: "Noctowl", rate: "10%", time: "Night" },
+      { pokemon: "Murkrow", rate: "10%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Zangoose", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Seviper", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Munchlax", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Tyrogue", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 44": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Weepinbell", rate: "34%", time: "All" },
+      { pokemon: "Tangela", rate: "30%", time: "All" },
+      { pokemon: "Lickitung", rate: "20%", time: "All" },
+      { pokemon: "Swinub", rate: "10%", time: "All" },
+      { pokemon: "Bellsprout", rate: "5%", time: "All" },
+      { pokemon: "Octillery", rate: "1%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Poliwag", rate: "30%", method: "Good Rod" },
+      { pokemon: "Remoraid", rate: "20%", method: "Good Rod" },
+      { pokemon: "Poliwhirl", rate: "10%", method: "Good Rod" },
+      { pokemon: "Barboach", rate: "40%", method: "Super Rod" },
+      { pokemon: "Poliwhirl", rate: "30%", method: "Super Rod" },
+      { pokemon: "Octillery", rate: "20%", method: "Super Rod" },
+      { pokemon: "Politoed", rate: "10%", method: "Super Rod" },
+    ],
+    radio: [
+      { pokemon: "Shelgon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Sealeo", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Munchlax", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Snover", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 45": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Graveler", rate: "20%", time: "All" },
+      { pokemon: "Gligar", rate: "20%", time: "All" },
+      { pokemon: "Golem", rate: "10%", time: "All" },
+      { pokemon: "Fearow", rate: "15%", time: "All" },
+      { pokemon: "Donphan", rate: "24%", time: "Morning" },
+      { pokemon: "Skarmory", rate: "6%", time: "Morning" },
+      { pokemon: "Teddiursa", rate: "5%", time: "Morning" },
+      { pokemon: "Donphan", rate: "10%", time: "Day" },
+      { pokemon: "Skarmory", rate: "10%", time: "Day" },
+      { pokemon: "Teddiursa", rate: "5%", time: "Day" },
+      { pokemon: "Phanpy", rate: "5%", time: "Day" },
+      { pokemon: "Ursaring", rate: "14%", time: "Night" },
+      { pokemon: "Donphan", rate: "10%", time: "Night" },
+      { pokemon: "Skarmory", rate: "6%", time: "Night" },
+      { pokemon: "Phanpy", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Mightyena", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Altaria", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Altaria", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Kirlia", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 46": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Geodude", rate: "35%", time: "All" },
+      { pokemon: "Spearow", rate: "35%", time: "Morning" },
+      { pokemon: "Rattata", rate: "20%", time: "Morning" },
+      { pokemon: "Phanpy", rate: "10%", time: "Morning" },
+      { pokemon: "Spearow", rate: "35%", time: "Day" },
+      { pokemon: "Rattata", rate: "20%", time: "Day" },
+      { pokemon: "Phanpy", rate: "5%", time: "Day" },
+      { pokemon: "Jigglypuff", rate: "5%", time: "Day" },
+      { pokemon: "Rattata", rate: "50%", time: "Night" },
+      { pokemon: "Phanpy", rate: "5%", time: "Night" },
+      { pokemon: "Teddiursa", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Poochyena", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Swablu", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Swablu", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Ralts", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 47": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Ditto", rate: "41%", time: "All" },
+      { pokemon: "Miltank", rate: "20%", time: "All" },
+      { pokemon: "Fearow", rate: "10%", time: "All" },
+      { pokemon: "Houndoom", rate: "5%", time: "All" },
+      { pokemon: "Gloom", rate: "5%", time: "All" },
+      { pokemon: "Dugtrio", rate: "4%", time: "All" },
+      { pokemon: "Farfetch'd", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Noctowl", rate: "10%", time: "Night" },
+      { pokemon: "Misdreavus", rate: "5%", time: "Night" },
+    ],
+  },
+  "Route 48": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Tauros", rate: "20%", time: "All" },
+      { pokemon: "Gloom", rate: "20%", time: "All" },
+      { pokemon: "Skiploom", rate: "10%", time: "All" },
+      { pokemon: "Fearow", rate: "10%", time: "All" },
+      { pokemon: "Electabuzz", rate: "5%", time: "All" },
+      { pokemon: "Girafarig", rate: "5%", time: "All" },
+      { pokemon: "Diglett", rate: "4%", time: "All" },
+      { pokemon: "Farfetch'd", rate: "21%", time: "Morning, Day" },
+      { pokemon: "Houndour", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Noctowl", rate: "10%", time: "Night" },
+      { pokemon: "Houndour", rate: "10%", time: "Night" },
+      { pokemon: "Misdreavus", rate: "4%", time: "Night" },
+      { pokemon: "Houndoom", rate: "2%", time: "Night" },
+    ],
+  },
+  // ─── JOHTO DUNGEONS ───
+  "Ilex Forest": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Butterfree", rate: "4%", time: "All" },
+      { pokemon: "Beedrill", rate: "4%", time: "All" },
+      { pokemon: "Caterpie", rate: "20%", time: "Morning" },
+      { pokemon: "Weedle", rate: "20%", time: "Morning" },
+      { pokemon: "Paras", rate: "15%", time: "Morning" },
+      { pokemon: "Metapod", rate: "10%", time: "Morning" },
+      { pokemon: "Kakuna", rate: "10%", time: "Morning" },
+      { pokemon: "Hoothoot", rate: "10%", time: "Morning" },
+      { pokemon: "Pineco", rate: "10%", time: "Morning" },
+      { pokemon: "Venonat", rate: "5%", time: "Morning" },
+      { pokemon: "Oddish", rate: "2%", time: "Morning" },
+      { pokemon: "Caterpie", rate: "20%", time: "Day" },
+      { pokemon: "Weedle", rate: "20%", time: "Day" },
+      { pokemon: "Metapod", rate: "10%", time: "Day" },
+      { pokemon: "Kakuna", rate: "10%", time: "Day" },
+      { pokemon: "Hoothoot", rate: "10%", time: "Day" },
+      { pokemon: "Pineco", rate: "10%", time: "Day" },
+      { pokemon: "Paras", rate: "5%", time: "Day" },
+      { pokemon: "Venonat", rate: "5%", time: "Day" },
+      { pokemon: "Oddish", rate: "2%", time: "Day" },
+      { pokemon: "Oddish", rate: "52%", time: "Night" },
+      { pokemon: "Hoothoot", rate: "20%", time: "Night" },
+      { pokemon: "Venonat", rate: "15%", time: "Night" },
+      { pokemon: "Paras", rate: "5%", time: "Night" },
+    ],
+  },
+  "Ice Path": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Golbat", rate: "30-40%", time: "All" },
+      { pokemon: "Piloswine", rate: "20%", time: "All" },
+      { pokemon: "Swinub", rate: "10%", time: "All" },
+      { pokemon: "Teddiursa", rate: "10%", time: "1F only" },
+      { pokemon: "Zubat", rate: "10%", time: "1F only" },
+      { pokemon: "Sneasel", rate: "5-10%", time: "Morning" },
+      { pokemon: "Delibird", rate: "5-15%", time: "All" },
+      { pokemon: "Jynx", rate: "5-10%", time: "Day" },
+    ],
+    radio: [
+      { pokemon: "Castform", rate: "20%", method: "Hoenn Radio (1F)" },
+      { pokemon: "Spheal", rate: "20%", method: "Hoenn Radio (1F)" },
+      { pokemon: "Sealeo", rate: "20%", method: "Hoenn Radio (B1F-B3F)" },
+      { pokemon: "Snorunt", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Snover", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "National Park": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Butterfree", rate: "20%", time: "All" },
+      { pokemon: "Beedrill", rate: "20%", time: "All" },
+      { pokemon: "Yanma", rate: "1%", time: "All" },
+      { pokemon: "Pidgey", rate: "14%", time: "Morning, Day" },
+      { pokemon: "Psyduck", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Pidgeotto", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Ledyba", rate: "20%", time: "Morning" },
+      { pokemon: "Sunkern", rate: "5%", time: "Morning" },
+      { pokemon: "Venonat", rate: "5%", time: "Morning" },
+      { pokemon: "Sunkern", rate: "25%", time: "Day" },
+      { pokemon: "Abra", rate: "5%", time: "Day" },
+      { pokemon: "Spinarak", rate: "20%", time: "Night" },
+      { pokemon: "Psyduck", rate: "15%", time: "Night" },
+      { pokemon: "Hoothoot", rate: "14%", time: "Night" },
+      { pokemon: "Venonat", rate: "10%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Beautifly", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Illumise", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Combee", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Volbeat", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Ruins of Alph": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Natu", rate: "70%", time: "Exterior" },
+      { pokemon: "Smeargle", rate: "30%", time: "Exterior" },
+      { pokemon: "Unown", rate: "100%", time: "Interior" },
+    ],
+    radio: [
+      { pokemon: "Baltoy", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Beldum", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Gible", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Riolu", rate: "20%", method: "Sinnoh Radio" },
+    ],
+    rockSmash: [
+      { pokemon: "Geodude", rate: "100%", time: "All (5% encounter rate, high fossil drop)" },
+    ],
+  },
+  "Victory Road": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Golbat", rate: "30%", time: "1F" },
+      { pokemon: "Graveler", rate: "20%", time: "All" },
+      { pokemon: "Ursaring", rate: "10-15%", time: "All" },
+      { pokemon: "Donphan", rate: "10-15%", time: "All" },
+      { pokemon: "Rhyhorn", rate: "10%", time: "All" },
+      { pokemon: "Larvitar", rate: "4%", time: "All" },
+      { pokemon: "Onix", rate: "4%", time: "1F" },
+      { pokemon: "Rhydon", rate: "2%", time: "All" },
+      { pokemon: "Golem", rate: "5%", time: "2F, 3F" },
+      { pokemon: "Steelix", rate: "5%", time: "2F, 3F" },
+      { pokemon: "Sandslash", rate: "10%", time: "2F 3F Morning, Day" },
+      { pokemon: "Arbok", rate: "4%", time: "2F 3F Morning, Day" },
+      { pokemon: "Arbok", rate: "10%", time: "2F 3F Night" },
+      { pokemon: "Sandslash", rate: "4%", time: "2F 3F Night" },
+    ],
+    rockSmash: [
+      { pokemon: "Golem", rate: "90%", time: "All" },
+      { pokemon: "Larvitar", rate: "10%", time: "All" },
+    ],
+  },
+  // ─── JOHTO DUNGEONS (continued) ───
+  "Sprout Tower": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Hoothoot", rate: "20%", time: "All" },
+      { pokemon: "Rattata", rate: "65%", time: "Morning, Day" },
+      { pokemon: "Bellsprout", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Gastly", rate: "65%", time: "Night" },
+      { pokemon: "Rattata", rate: "10%", time: "Night" },
+      { pokemon: "Bellsprout", rate: "5%", time: "Night" },
+    ],
+  },
+  "Burned Tower": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Koffing", rate: "34-50%", time: "All (1F/B1F)" },
+      { pokemon: "Rattata", rate: "20%", time: "1F" },
+      { pokemon: "Raticate", rate: "19-22%", time: "1F, B1F" },
+      { pokemon: "Grimer", rate: "5-15%", time: "All" },
+      { pokemon: "Zubat", rate: "10-15%", time: "All" },
+      { pokemon: "Magmar", rate: "2-10%", time: "All" },
+    ],
+  },
+  "Bell Tower": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Ariados", rate: "15-20%", time: "All" },
+      { pokemon: "Weepinbell", rate: "5-10%", time: "All" },
+      { pokemon: "Murkrow", rate: "4-10%", time: "All" },
+      { pokemon: "Noctowl", rate: "30-40%", time: "All" },
+      { pokemon: "Raticate", rate: "10-30%", time: "Morning, Day" },
+      { pokemon: "Haunter", rate: "4-15%", time: "All" },
+      { pokemon: "Rattata", rate: "1%", time: "2F Morning, Day" },
+      { pokemon: "Gengar", rate: "5%", time: "3F+ Night" },
+      { pokemon: "Gastly", rate: "1%", time: "2F Night" },
+    ],
+  },
+  "Slowpoke Well": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Zubat", rate: "70%", time: "B1F" },
+      { pokemon: "Slowpoke", rate: "20-21%", time: "All" },
+      { pokemon: "Psyduck", rate: "10%", time: "All" },
+      { pokemon: "Golbat", rate: "35%", time: "B2F" },
+      { pokemon: "Zubat", rate: "30%", time: "B2F" },
+      { pokemon: "Slowbro", rate: "4%", time: "B2F" },
+    ],
+    surfing: [
+      { pokemon: "Slowbro", rate: "4%", time: "B1F" },
+    ],
+    fishing: [
+      { pokemon: "Seaking", rate: "55%", method: "Super Rod (B1F)" },
+      { pokemon: "Goldeen", rate: "30%", method: "Super Rod (B1F)" },
+      { pokemon: "Barboach", rate: "10%", method: "Super Rod (B1F)" },
+      { pokemon: "Whiscash", rate: "5%", method: "Super Rod (B1F)" },
+      { pokemon: "Seaking", rate: "40%", method: "Super Rod (B2F)" },
+      { pokemon: "Goldeen", rate: "30%", method: "Super Rod (B2F)" },
+      { pokemon: "Barboach", rate: "15%", method: "Super Rod (B2F)" },
+      { pokemon: "Whiscash", rate: "10%", method: "Super Rod (B2F)" },
+      { pokemon: "Slowking", rate: "5%", method: "Super Rod (B2F)" },
+    ],
+  },
+  "Union Cave": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Geodude", rate: "30%", time: "1F" },
+      { pokemon: "Sandshrew", rate: "30%", time: "1F" },
+      { pokemon: "Zubat", rate: "25%", time: "1F" },
+      { pokemon: "Rattata", rate: "10%", time: "1F" },
+      { pokemon: "Onix", rate: "5%", time: "1F" },
+      { pokemon: "Raticate", rate: "30%", time: "B2F" },
+      { pokemon: "Zubat", rate: "20%", time: "B2F" },
+      { pokemon: "Golbat", rate: "20%", time: "B2F" },
+      { pokemon: "Geodude", rate: "15%", time: "B2F" },
+      { pokemon: "Onix", rate: "5%", time: "B2F" },
+      { pokemon: "Sandshrew", rate: "6-8%", time: "B2F Morning, Day" },
+      { pokemon: "Sandslash", rate: "2-4%", time: "B2F" },
+    ],
+    surfing: [
+      { pokemon: "Lapras", rate: "4%", time: "B1F" },
+      { pokemon: "Lapras", rate: "6%", time: "B2F" },
+    ],
+  },
+  "Mt. Mortar (Entrance)": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Zubat", rate: "40%", time: "All" },
+      { pokemon: "Machop", rate: "20%", time: "All" },
+      { pokemon: "Golbat", rate: "10%", time: "All" },
+      { pokemon: "Raticate", rate: "10%", time: "All" },
+      { pokemon: "Rattata", rate: "5%", time: "All" },
+      { pokemon: "Slugma", rate: "5%", time: "All" },
+      { pokemon: "Marill", rate: "6-8%", time: "All" },
+      { pokemon: "Geodude", rate: "2-4%", time: "Morning, Day" },
+    ],
+    surfing: [
+      { pokemon: "Marill", rate: "4%", time: "1F" },
+    ],
+  },
+  "Mt. Mortar (Back)": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Machop", rate: "36%", time: "All" },
+      { pokemon: "Rattata", rate: "10%", time: "All" },
+      { pokemon: "Raticate", rate: "5%", time: "All" },
+      { pokemon: "Zubat", rate: "5%", time: "All" },
+      { pokemon: "Marill", rate: "4%", time: "All" },
+      { pokemon: "Geodude", rate: "20-30%", time: "Morning, Day" },
+      { pokemon: "Slugma", rate: "10-20%", time: "All" },
+    ],
+  },
+  "Mt. Mortar (Waterfall)": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Golem", rate: "20%", time: "All" },
+      { pokemon: "Machamp", rate: "20%", time: "All" },
+      { pokemon: "Graveler", rate: "10%", time: "All" },
+      { pokemon: "Machoke", rate: "10%", time: "All" },
+      { pokemon: "Golbat", rate: "10%", time: "All" },
+      { pokemon: "Azumarill", rate: "4%", time: "All" },
+      { pokemon: "Raticate", rate: "10-15%", time: "All" },
+      { pokemon: "Tyrogue", rate: "5-6%", time: "All" },
+      { pokemon: "Magcargo", rate: "5-10%", time: "All" },
+      { pokemon: "Hitmontop", rate: "1%", time: "Night" },
+    ],
+  },
+  "Mt. Mortar (Karate King)": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Zubat", rate: "40%", time: "All" },
+      { pokemon: "Raticate", rate: "20%", time: "All" },
+      { pokemon: "Machop", rate: "10%", time: "All" },
+      { pokemon: "Machoke", rate: "10%", time: "All" },
+      { pokemon: "Marill", rate: "6-8%", time: "All" },
+      { pokemon: "Geodude", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Slugma", rate: "5-10%", time: "All" },
+      { pokemon: "Tyrogue", rate: "2-4%", time: "All" },
+    ],
+  },
+  "Dark Cave (Route 31)": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Geodude", rate: "45%", time: "All" },
+      { pokemon: "Zubat", rate: "35%", time: "All" },
+      { pokemon: "Phanpy", rate: "10%", time: "All" },
+      { pokemon: "Poliwag", rate: "4-6%", time: "All" },
+      { pokemon: "Dunsparce", rate: "4-6%", time: "All" },
+    ],
+    rockSmash: [
+      { pokemon: "Dunsparce", rate: "90%", time: "All" },
+      { pokemon: "Geodude", rate: "10%", time: "All" },
+    ],
+  },
+  "Dark Cave (Route 45)": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Graveler", rate: "25%", time: "All" },
+      { pokemon: "Zubat", rate: "20%", time: "All" },
+      { pokemon: "Wobbuffet", rate: "15%", time: "All" },
+      { pokemon: "Golbat", rate: "11%", time: "All" },
+      { pokemon: "Geodude", rate: "10%", time: "All" },
+      { pokemon: "Dunsparce", rate: "4%", time: "All" },
+      { pokemon: "Phanpy", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Teddiursa", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Teddiursa", rate: "10%", time: "Night" },
+      { pokemon: "Phanpy", rate: "5%", time: "Night" },
+    ],
+  },
+  "Cliff Cave": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Golbat", rate: "20%", time: "All" },
+      { pokemon: "Graveler", rate: "20%", time: "All" },
+      { pokemon: "Krabby", rate: "10%", time: "All" },
+      { pokemon: "Kingler", rate: "10%", time: "All" },
+      { pokemon: "Machop", rate: "10%", time: "All" },
+      { pokemon: "Onix", rate: "10%", time: "All" },
+      { pokemon: "Quagsire", rate: "8%", time: "All" },
+      { pokemon: "Steelix", rate: "2%", time: "All" },
+      { pokemon: "Misdreavus", rate: "5-10%", time: "All" },
+      { pokemon: "Machoke", rate: "5%", time: "Morning, Day" },
+    ],
+    radio: [
+      { pokemon: "Trapinch", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Cacnea", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Hippopotas", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Nosepass", rate: "20%", method: "Sinnoh Radio" },
+    ],
+    rockSmash: [
+      { pokemon: "Kingler", rate: "90%", time: "Postgame" },
+      { pokemon: "Shuckle", rate: "10%", time: "Postgame" },
+    ],
+  },
+  "Whirl Islands": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Kingler", rate: "20%", time: "1F, B1F" },
+      { pokemon: "Krabby", rate: "20%", time: "1F, B1F" },
+      { pokemon: "Zubat", rate: "20%", time: "1F, B1F" },
+      { pokemon: "Seel", rate: "15-20%", time: "All" },
+      { pokemon: "Poliwhirl", rate: "10%", time: "All" },
+      { pokemon: "Golbat", rate: "10-20%", time: "B2F" },
+      { pokemon: "Dewgong", rate: "5%", time: "B2F" },
+      { pokemon: "Corsola", rate: "5%", time: "All" },
+    ],
+  },
+  // ─── JOHTO ROUTES — ADDITIONAL (Surf/Fish/missing) ───
+  "Route 26": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Sandslash", rate: "30%", time: "All" },
+      { pokemon: "Arbok", rate: "10%", time: "All" },
+      { pokemon: "Ponyta", rate: "10%", time: "All" },
+      { pokemon: "Rapidash", rate: "10%", time: "All" },
+      { pokemon: "Jumpluff", rate: "5%", time: "All" },
+      { pokemon: "Doduo", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Dodrio", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Raticate", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Raticate", rate: "20%", time: "Night" },
+      { pokemon: "Quagsire", rate: "10%", time: "Night" },
+      { pokemon: "Dodrio", rate: "5%", time: "Night" },
+    ],
+    surfing: [
+      { pokemon: "Tentacool", rate: "70%", time: "All" },
+      { pokemon: "Tentacruel", rate: "30%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Tentacruel", rate: "15%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "10%", method: "Super Rod" },
+      { pokemon: "Luvdisc", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Route 27": {
+    region: "Johto", type: "route",
+    walking: [
+      { pokemon: "Jumpluff", rate: "20%", time: "All" },
+      { pokemon: "Arbok", rate: "15%", time: "All" },
+      { pokemon: "Raticate", rate: "10%", time: "All" },
+      { pokemon: "Sandslash", rate: "5%", time: "All" },
+      { pokemon: "Ponyta", rate: "5%", time: "All" },
+      { pokemon: "Doduo", rate: "25%", time: "Morning, Day" },
+      { pokemon: "Dodrio", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Quagsire", rate: "40%", time: "Night" },
+      { pokemon: "Doduo", rate: "5%", time: "Night" },
+    ],
+    surfing: [
+      { pokemon: "Tentacool", rate: "70%", time: "All" },
+      { pokemon: "Tentacruel", rate: "30%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Tentacruel", rate: "15%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "10%", method: "Super Rod" },
+      { pokemon: "Luvdisc", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Route 40": {
+    region: "Johto", type: "route",
+    surfing: [
+      { pokemon: "Tentacool", rate: "65%", time: "All" },
+      { pokemon: "Tentacruel", rate: "30%", time: "All" },
+      { pokemon: "Mantine", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Tentacool", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "30%", method: "Good Rod" },
+      { pokemon: "Horsea", rate: "15%", method: "Good Rod" },
+      { pokemon: "Shellder", rate: "10%", method: "Good Rod" },
+      { pokemon: "Remoraid", rate: "5%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Seadra", rate: "15%", method: "Super Rod" },
+      { pokemon: "Octillery", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Route 41": {
+    region: "Johto", type: "route",
+    surfing: [
+      { pokemon: "Tentacool", rate: "60%", time: "All" },
+      { pokemon: "Tentacruel", rate: "30%", time: "All" },
+      { pokemon: "Mantine", rate: "10%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Tentacool", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "30%", method: "Good Rod" },
+      { pokemon: "Horsea", rate: "15%", method: "Good Rod" },
+      { pokemon: "Shellder", rate: "10%", method: "Good Rod" },
+      { pokemon: "Remoraid", rate: "5%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Seadra", rate: "15%", method: "Super Rod" },
+      { pokemon: "Octillery", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Cianwood City": {
+    region: "Johto", type: "route",
+    surfing: [
+      { pokemon: "Tentacool", rate: "90%", time: "All" },
+      { pokemon: "Horsea", rate: "9%", time: "All" },
+      { pokemon: "Mantine", rate: "1%", time: "All" },
+    ],
+    rockSmash: [
+      { pokemon: "Krabby", rate: "90%", time: "All" },
+      { pokemon: "Shuckle", rate: "10%", time: "All" },
+    ],
+  },
+  "Dragon's Den": {
+    region: "Johto", type: "dungeon",
+    surfing: [
+      { pokemon: "Magikarp", rate: "60%", time: "All" },
+      { pokemon: "Gyarados", rate: "30%", time: "All" },
+      { pokemon: "Dratini", rate: "5%", time: "All" },
+      { pokemon: "Dragonair", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Feebas", rate: "40%", method: "Super Rod" },
+      { pokemon: "Dratini", rate: "30%", method: "Super Rod" },
+      { pokemon: "Dragonair", rate: "15%", method: "Super Rod" },
+      { pokemon: "Gyarados", rate: "10%", method: "Super Rod" },
+      { pokemon: "Milotic", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Blackthorn City": {
+    region: "Johto", type: "route",
+    fishing: [
+      { pokemon: "Poliwhirl", rate: "60%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Feebas", rate: "80%", method: "Super Rod" },
+      { pokemon: "Dratini", rate: "20%", method: "Super Rod" },
+    ],
+  },
+  "Olivine City": {
+    region: "Johto", type: "route",
+    fishing: [
+      { pokemon: "Magikarp", rate: "80%", method: "Old Rod" },
+      { pokemon: "Krabby", rate: "15%", method: "Old Rod" },
+      { pokemon: "Staryu", rate: "5%", method: "Old Rod" },
+      { pokemon: "Krabby", rate: "45%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Corsola", rate: "10%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "5%", method: "Good Rod" },
+      { pokemon: "Kingler", rate: "50%", method: "Super Rod" },
+      { pokemon: "Corsola", rate: "30%", method: "Super Rod" },
+      { pokemon: "Krabby", rate: "15%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Cherrygrove City": {
+    region: "Johto", type: "route",
+    fishing: [
+      { pokemon: "Magikarp", rate: "70%", method: "Old Rod" },
+      { pokemon: "Krabby", rate: "30%", method: "Old Rod" },
+      { pokemon: "Krabby", rate: "45%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Corsola", rate: "10%", method: "Good Rod" },
+      { pokemon: "Qwilfish", rate: "5%", method: "Good Rod" },
+      { pokemon: "Kingler", rate: "50%", method: "Super Rod" },
+      { pokemon: "Corsola", rate: "30%", method: "Super Rod" },
+      { pokemon: "Krabby", rate: "15%", method: "Super Rod" },
+      { pokemon: "Qwilfish", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "New Bark Town": {
+    region: "Johto", type: "route",
+    fishing: [
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Tentacruel", rate: "15%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "10%", method: "Super Rod" },
+      { pokemon: "Luvdisc", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Violet City": {
+    region: "Johto", type: "route",
+    fishing: [
+      { pokemon: "Magikarp", rate: "70%", method: "Old Rod" },
+      { pokemon: "Poliwag", rate: "30%", method: "Old Rod" },
+      { pokemon: "Poliwhirl", rate: "40%", method: "Super Rod" },
+      { pokemon: "Poliwag", rate: "30%", method: "Super Rod" },
+      { pokemon: "Magikarp", rate: "15%", method: "Super Rod" },
+      { pokemon: "Barboach", rate: "10%", method: "Super Rod" },
+      { pokemon: "Politoed", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Cliff Edge Gate": {
+    region: "Johto", type: "dungeon",
+    surfing: [
+      { pokemon: "Shellos", rate: "30%", time: "All" },
+      { pokemon: "Gastrodon", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Barboach", rate: "30%", method: "Good Rod" },
+      { pokemon: "Poliwag", rate: "30%", method: "Good Rod" },
+      { pokemon: "Whiscash", rate: "40%", method: "Super Rod" },
+      { pokemon: "Gyarados", rate: "30%", method: "Super Rod" },
+      { pokemon: "Barboach", rate: "15%", method: "Super Rod" },
+      { pokemon: "Poliwhirl", rate: "10%", method: "Super Rod" },
+      { pokemon: "Politoed", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Tohjo Falls": {
+    region: "Johto", type: "dungeon",
+    fishing: [
+      { pokemon: "Seaking", rate: "40%", method: "Super Rod" },
+      { pokemon: "Goldeen", rate: "40%", method: "Super Rod" },
+      { pokemon: "Barboach", rate: "15%", method: "Super Rod" },
+      { pokemon: "Luvdisc", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Safari Zone": {
+    region: "Johto", type: "dungeon",
+    walking: [
+      { pokemon: "Electabuzz", rate: "10%", time: "Plains (default)" },
+      { pokemon: "Houndour", rate: "10%", time: "Savannah (Night)" },
+      { pokemon: "Diglett", rate: "10%", time: "Marshland (default)" },
+      { pokemon: "Bayleef", rate: "10%", time: "Meadow (5 Forest Obj, postgame)" },
+      { pokemon: "Quilava", rate: "10%", time: "Savannah (5 Plains Obj, postgame)" },
+      { pokemon: "Croconaw", rate: "10%", time: "Swamp (5 Waterside Obj, postgame)" },
+    ],
+  },
+  // ─── KANTO ROUTES — FULL ───
+  "Route 1": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Furret", rate: "40%", time: "Morning" },
+      { pokemon: "Pidgeot", rate: "30%", time: "Morning" },
+      { pokemon: "Swellow", rate: "14%", time: "Morning" },
+      { pokemon: "Venusaur", rate: "12%", time: "Morning" },
+      { pokemon: "Slaking", rate: "4%", time: "Morning" },
+      { pokemon: "Furret", rate: "40%", time: "Day" },
+      { pokemon: "Pidgeot", rate: "40%", time: "Day" },
+      { pokemon: "Swellow", rate: "9%", time: "Day" },
+      { pokemon: "Venusaur", rate: "7%", time: "Day" },
+      { pokemon: "Vigoroth", rate: "4%", time: "Day" },
+      { pokemon: "Raticate", rate: "40%", time: "Night" },
+      { pokemon: "Noctowl", rate: "30%", time: "Night" },
+      { pokemon: "Slaking", rate: "14%", time: "Night" },
+      { pokemon: "Venusaur", rate: "7%", time: "Night" },
+      { pokemon: "Swellow", rate: "4%", time: "Night" },
+    ],
+  },
+  "Viridian Forest": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Butterfree", rate: "20%", time: "All" },
+      { pokemon: "Beedrill", rate: "20%", time: "All" },
+      { pokemon: "Pidgeot", rate: "21%", time: "Morning" },
+      { pokemon: "Breloom", rate: "15%", time: "Morning" },
+      { pokemon: "Nuzleaf", rate: "10%", time: "Morning" },
+      { pokemon: "Slaking", rate: "5%", time: "Morning" },
+      { pokemon: "Pikachu", rate: "5%", time: "Morning" },
+      { pokemon: "Nincada", rate: "4%", time: "Morning" },
+      { pokemon: "Pidgeot", rate: "21%", time: "Day" },
+      { pokemon: "Ninjask", rate: "20%", time: "Day" },
+      { pokemon: "Pikachu", rate: "9%", time: "Day" },
+      { pokemon: "Breloom", rate: "5%", time: "Day" },
+      { pokemon: "Nuzleaf", rate: "5%", time: "Day" },
+      { pokemon: "Noctowl", rate: "21%", time: "Night" },
+      { pokemon: "Nuzleaf", rate: "15%", time: "Night" },
+      { pokemon: "Breloom", rate: "10%", time: "Night" },
+      { pokemon: "Slaking", rate: "5%", time: "Night" },
+      { pokemon: "Pikachu", rate: "5%", time: "Night" },
+      { pokemon: "Nincada", rate: "4%", time: "Night" },
+    ],
+  },
+  // ─── KANTO ROUTES — FULL ───
+  "Route 2 (South)": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Butterfree", rate: "10%", time: "All" },
+      { pokemon: "Beedrill", rate: "10%", time: "All" },
+      { pokemon: "Pidgeot", rate: "20%", time: "Morning" },
+      { pokemon: "Volbeat", rate: "20%", time: "Morning" },
+      { pokemon: "Swellow", rate: "20%", time: "Morning" },
+      { pokemon: "Slaking", rate: "7%", time: "Morning" },
+      { pokemon: "Illumise", rate: "5%", time: "Morning" },
+      { pokemon: "Roselia", rate: "4%", time: "Morning" },
+      { pokemon: "Nincada", rate: "4%", time: "Morning" },
+      { pokemon: "Pidgeot", rate: "40%", time: "Day" },
+      { pokemon: "Swellow", rate: "10%", time: "Day" },
+      { pokemon: "Vigoroth", rate: "10%", time: "Day" },
+      { pokemon: "Roselia", rate: "8%", time: "Day" },
+      { pokemon: "Volbeat", rate: "5%", time: "Day" },
+      { pokemon: "Illumise", rate: "5%", time: "Day" },
+      { pokemon: "Pikachu", rate: "2%", time: "Day" },
+      { pokemon: "Noctowl", rate: "30%", time: "Night" },
+      { pokemon: "Illumise", rate: "20%", time: "Night" },
+      { pokemon: "Slaking", rate: "10%", time: "Night" },
+      { pokemon: "Swellow", rate: "7%", time: "Night" },
+      { pokemon: "Volbeat", rate: "5%", time: "Night" },
+      { pokemon: "Roselia", rate: "4%", time: "Night" },
+      { pokemon: "Nincada", rate: "4%", time: "Night" },
+    ],
+  },
+  "Route 2 (North)": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Nidorina", rate: "20%", time: "All" },
+      { pokemon: "Nidorino", rate: "20%", time: "All" },
+      { pokemon: "Raticate", rate: "10%", time: "All" },
+      { pokemon: "Diglett", rate: "4%", time: "All" },
+      { pokemon: "Pidgeot", rate: "20%", time: "Morning" },
+      { pokemon: "Swellow", rate: "15%", time: "Morning" },
+      { pokemon: "Roselia", rate: "7%", time: "Morning" },
+      { pokemon: "Nincada", rate: "4%", time: "Morning" },
+      { pokemon: "Pidgeot", rate: "20%", time: "Day" },
+      { pokemon: "Roselia", rate: "14%", time: "Day" },
+      { pokemon: "Swellow", rate: "6%", time: "Day" },
+      { pokemon: "Vigoroth", rate: "6%", time: "Day" },
+      { pokemon: "Noctowl", rate: "25%", time: "Night" },
+      { pokemon: "Slaking", rate: "10%", time: "Night" },
+      { pokemon: "Roselia", rate: "5%", time: "Night" },
+      { pokemon: "Nincada", rate: "4%", time: "Night" },
+      { pokemon: "Trapinch", rate: "2%", time: "Night" },
+    ],
+  },
+  "Route 3": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Sandslash", rate: "14%", time: "All" },
+      { pokemon: "Arbok", rate: "10%", time: "All" },
+      { pokemon: "Jigglypuff", rate: "10%", time: "All" },
+      { pokemon: "Drifblim", rate: "4%", time: "All" },
+      { pokemon: "Raticate", rate: "30%", time: "Morning, Day" },
+      { pokemon: "Fearow", rate: "25%", time: "Morning, Day" },
+      { pokemon: "Charizard", rate: "7%", time: "Morning, Day" },
+      { pokemon: "Golbat", rate: "30%", time: "Night" },
+      { pokemon: "Raticate", rate: "20%", time: "Night" },
+      { pokemon: "Charizard", rate: "12%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Blaziken", rate: "40%", method: "Hoenn Radio" },
+      { pokemon: "Infernape", rate: "40%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 4": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Fearow", rate: "30%", time: "All" },
+      { pokemon: "Jigglypuff", rate: "10%", time: "All" },
+      { pokemon: "Sableye", rate: "10%", time: "All" },
+      { pokemon: "Mawile", rate: "10%", time: "All" },
+      { pokemon: "Raticate", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Arbok", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Drifblim", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Golbat", rate: "30%", time: "Night" },
+      { pokemon: "Drifblim", rate: "5%", time: "Night" },
+      { pokemon: "Clefairy", rate: "5%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Goldeen", rate: "100%", method: "Old Rod" },
+      { pokemon: "Goldeen", rate: "40%", method: "Good Rod" },
+      { pokemon: "Corphish", rate: "40%", method: "Good Rod" },
+      { pokemon: "Staryu", rate: "15%", method: "Good Rod" },
+      { pokemon: "Finneon", rate: "5%", method: "Good Rod" },
+      { pokemon: "Seaking", rate: "40%", method: "Super Rod" },
+      { pokemon: "Corphish", rate: "30%", method: "Super Rod" },
+      { pokemon: "Staryu", rate: "15%", method: "Super Rod" },
+      { pokemon: "Crawdaunt", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lumineon", rate: "5%", method: "Super Rod" },
+    ],
+    radio: [
+      { pokemon: "Sableye", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Mawile", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Lunatone", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Solrock", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 5": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Jigglypuff", rate: "10%", time: "All" },
+      { pokemon: "Alakazam", rate: "5%", time: "All" },
+      { pokemon: "Weepinbell", rate: "30%", time: "Morning" },
+      { pokemon: "Pidgeotto", rate: "20%", time: "Morning" },
+      { pokemon: "Pidgeot", rate: "20%", time: "Morning" },
+      { pokemon: "Skitty", rate: "10%", time: "Morning" },
+      { pokemon: "Skuntank", rate: "5%", time: "Morning" },
+      { pokemon: "Weepinbell", rate: "30%", time: "Day" },
+      { pokemon: "Pidgeotto", rate: "20%", time: "Day" },
+      { pokemon: "Pidgeot", rate: "20%", time: "Day" },
+      { pokemon: "Stunky", rate: "10%", time: "Day" },
+      { pokemon: "Skitty", rate: "10%", time: "Day" },
+      { pokemon: "Gloom", rate: "35%", time: "Night" },
+      { pokemon: "Noctowl", rate: "20%", time: "Night" },
+      { pokemon: "Weepinbell", rate: "10%", time: "Night" },
+      { pokemon: "Skuntank", rate: "10%", time: "Night" },
+      { pokemon: "Skitty", rate: "5%", time: "Night" },
+    ],
+  },
+  "Route 6": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Magneton", rate: "10%", time: "All" },
+      { pokemon: "Weepinbell", rate: "30%", time: "Morning" },
+      { pokemon: "Skitty", rate: "30%", time: "Morning" },
+      { pokemon: "Persian", rate: "15%", time: "Morning" },
+      { pokemon: "Pidgeot", rate: "5%", time: "Morning" },
+      { pokemon: "Porygon", rate: "5%", time: "Morning" },
+      { pokemon: "Pelipper", rate: "5%", time: "Morning" },
+      { pokemon: "Weepinbell", rate: "30%", time: "Day" },
+      { pokemon: "Persian", rate: "20%", time: "Day" },
+      { pokemon: "Skitty", rate: "20%", time: "Day" },
+      { pokemon: "Pidgeot", rate: "10%", time: "Day" },
+      { pokemon: "Stunky", rate: "5%", time: "Day" },
+      { pokemon: "Porygon", rate: "5%", time: "Day" },
+      { pokemon: "Gloom", rate: "29%", time: "Night" },
+      { pokemon: "Stunky", rate: "20%", time: "Night" },
+      { pokemon: "Weepinbell", rate: "10%", time: "Night" },
+      { pokemon: "Skuntank", rate: "10%", time: "Night" },
+      { pokemon: "Persian", rate: "10%", time: "Night" },
+      { pokemon: "Porygon", rate: "7%", time: "Night" },
+      { pokemon: "Pelipper", rate: "4%", time: "Night" },
+    ],
+    surfing: [
+      { pokemon: "Psyduck", rate: "60%", time: "All" },
+      { pokemon: "Surskit", rate: "30%", time: "All" },
+      { pokemon: "Golduck", rate: "5%", time: "All" },
+      { pokemon: "Masquerain", rate: "5%", time: "All" },
+    ],
+  },
+  "Route 7": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Persian", rate: "20%", time: "All" },
+      { pokemon: "Vulpix", rate: "20%", time: "All" },
+      { pokemon: "Growlithe", rate: "20%", time: "Morning" },
+      { pokemon: "Raticate", rate: "20%", time: "Morning" },
+      { pokemon: "Fearow", rate: "10%", time: "Morning" },
+      { pokemon: "Murkrow", rate: "5%", time: "Morning" },
+      { pokemon: "Houndour", rate: "5%", time: "Morning" },
+      { pokemon: "Growlithe", rate: "25%", time: "Day" },
+      { pokemon: "Raticate", rate: "20%", time: "Day" },
+      { pokemon: "Fearow", rate: "10%", time: "Day" },
+      { pokemon: "Houndour", rate: "5%", time: "Day" },
+      { pokemon: "Murkrow", rate: "15%", time: "Night" },
+      { pokemon: "Growlithe", rate: "10%", time: "Night" },
+      { pokemon: "Houndour", rate: "10%", time: "Night" },
+      { pokemon: "Houndoom", rate: "10%", time: "Night" },
+    ],
+  },
+  "Route 8": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Persian", rate: "20%", time: "All" },
+      { pokemon: "Kadabra", rate: "30%", time: "Morning, Day" },
+      { pokemon: "Pidgeotto", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Growlithe", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Pidgeot", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Haunter", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Dusclops", rate: "5%", time: "Morning" },
+      { pokemon: "Alakazam", rate: "5%", time: "Day" },
+      { pokemon: "Gengar", rate: "25%", time: "Night" },
+      { pokemon: "Noctowl", rate: "20%", time: "Night" },
+      { pokemon: "Kadabra", rate: "10%", time: "Night" },
+      { pokemon: "Dusclops", rate: "10%", time: "Night" },
+      { pokemon: "Murkrow", rate: "10%", time: "Night" },
+      { pokemon: "Growlithe", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Mightyena", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Swalot", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Gardevoir", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Rotom", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 9": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Primeape", rate: "20%", time: "All" },
+      { pokemon: "Mankey", rate: "10%", time: "All" },
+      { pokemon: "Manectric", rate: "10%", time: "All" },
+      { pokemon: "Drifblim", rate: "5%", time: "All" },
+      { pokemon: "Magneton", rate: "5%", time: "All" },
+      { pokemon: "Fearow", rate: "20%", time: "Morning" },
+      { pokemon: "Raticate", rate: "20%", time: "Morning" },
+      { pokemon: "Venonat", rate: "5%", time: "Morning" },
+      { pokemon: "Stunky", rate: "5%", time: "Morning" },
+      { pokemon: "Fearow", rate: "25%", time: "Day" },
+      { pokemon: "Raticate", rate: "20%", time: "Day" },
+      { pokemon: "Stunky", rate: "5%", time: "Day" },
+      { pokemon: "Raticate", rate: "30%", time: "Night" },
+      { pokemon: "Venomoth", rate: "15%", time: "Night" },
+      { pokemon: "Skuntank", rate: "5%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Goldeen", rate: "40%", method: "Good Rod" },
+      { pokemon: "Corphish", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "15%", method: "Good Rod" },
+      { pokemon: "Finneon", rate: "5%", method: "Good Rod" },
+      { pokemon: "Seaking", rate: "40%", method: "Super Rod" },
+      { pokemon: "Corphish", rate: "30%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "15%", method: "Super Rod" },
+      { pokemon: "Crawdaunt", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lumineon", rate: "5%", method: "Super Rod" },
+    ],
+    radio: [
+      { pokemon: "Exploud", rate: "40%", method: "Hoenn Radio" },
+      { pokemon: "Luxray", rate: "40%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 10": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Electrode", rate: "20%", time: "All" },
+      { pokemon: "Voltorb", rate: "10%", time: "All" },
+      { pokemon: "Fearow", rate: "30%", time: "Morning" },
+      { pokemon: "Electrike", rate: "15%", time: "Morning" },
+      { pokemon: "Raticate", rate: "15%", time: "Morning" },
+      { pokemon: "Electabuzz", rate: "5%", time: "Morning" },
+      { pokemon: "Manectric", rate: "5%", time: "Morning" },
+      { pokemon: "Electrike", rate: "30%", time: "Day" },
+      { pokemon: "Fearow", rate: "15%", time: "Day" },
+      { pokemon: "Raticate", rate: "10%", time: "Day" },
+      { pokemon: "Electabuzz", rate: "10%", time: "Day" },
+      { pokemon: "Pikachu", rate: "5%", time: "Day" },
+      { pokemon: "Quagsire", rate: "30%", time: "Night" },
+      { pokemon: "Electrike", rate: "15%", time: "Night" },
+      { pokemon: "Raticate", rate: "15%", time: "Night" },
+      { pokemon: "Electabuzz", rate: "5%", time: "Night" },
+      { pokemon: "Manectric", rate: "5%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Goldeen", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "40%", method: "Good Rod" },
+      { pokemon: "Finneon", rate: "15%", method: "Good Rod" },
+      { pokemon: "Corphish", rate: "5%", method: "Good Rod" },
+      { pokemon: "Seaking", rate: "40%", method: "Super Rod" },
+      { pokemon: "Chinchou", rate: "30%", method: "Super Rod" },
+      { pokemon: "Crawdaunt", rate: "15%", method: "Super Rod" },
+      { pokemon: "Lumineon", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "5%", method: "Super Rod" },
+    ],
+    surfing: [
+      { pokemon: "Seaking", rate: "65%", time: "All" },
+      { pokemon: "Surskit", rate: "30%", time: "All" },
+      { pokemon: "Masquerain", rate: "5%", time: "All" },
+    ],
+    radio: [
+      { pokemon: "Exploud", rate: "40%", method: "Hoenn Radio" },
+      { pokemon: "Luxray", rate: "40%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 11": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Hypno", rate: "31%", time: "All" },
+      { pokemon: "Raticate", rate: "20%", time: "All" },
+      { pokemon: "Magneton", rate: "20%", time: "All" },
+      { pokemon: "Lickitung", rate: "5%", time: "All" },
+      { pokemon: "Shuppet", rate: "14%", time: "Morning, Day" },
+      { pokemon: "Skitty", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Shuppet", rate: "19%", time: "Night" },
+      { pokemon: "Skitty", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Mightyena", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Swalot", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Gardevoir", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Rotom", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 12": {
+    region: "Kanto", type: "route",
+    fishing: [
+      { pokemon: "Tentacool", rate: "55%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Qwilfish", rate: "5%", method: "Good Rod" },
+      { pokemon: "Tentacruel", rate: "55%", method: "Super Rod" },
+      { pokemon: "Tentacool", rate: "30%", method: "Super Rod" },
+      { pokemon: "Relicanth", rate: "10%", method: "Super Rod" },
+      { pokemon: "Qwilfish", rate: "5%", method: "Super Rod" },
+    ],
+    surfing: [
+      { pokemon: "Tentacruel", rate: "60%", time: "All" },
+      { pokemon: "Wailmer", rate: "35%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+    ],
+  },
+  "Route 13": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Nidorina", rate: "20%", time: "All" },
+      { pokemon: "Nidorino", rate: "20%", time: "All" },
+      { pokemon: "Pelipper", rate: "10%", time: "All" },
+      { pokemon: "Chansey", rate: "11%", time: "All" },
+      { pokemon: "Pidgeot", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Skiploom", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Gastrodon", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Jumpluff", rate: "4%", time: "Morning, Day" },
+      { pokemon: "Noctowl", rate: "15%", time: "Night" },
+      { pokemon: "Gastrodon", rate: "15%", time: "Night" },
+      { pokemon: "Skiploom", rate: "5%", time: "Night" },
+      { pokemon: "Quagsire", rate: "4%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Tentacool", rate: "55%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Qwilfish", rate: "5%", method: "Good Rod" },
+      { pokemon: "Tentacruel", rate: "55%", method: "Super Rod" },
+      { pokemon: "Tentacool", rate: "30%", method: "Super Rod" },
+      { pokemon: "Qwilfish", rate: "10%", method: "Super Rod" },
+      { pokemon: "Relicanth", rate: "5%", method: "Super Rod" },
+    ],
+    surfing: [
+      { pokemon: "Tentacruel", rate: "60%", time: "All" },
+      { pokemon: "Wailmer", rate: "35%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+    ],
+    radio: [
+      { pokemon: "Kecleon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Tropius", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Drifblim", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Lopunny", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 14": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Nidorina", rate: "20%", time: "All" },
+      { pokemon: "Nidorino", rate: "20%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+      { pokemon: "Chansey", rate: "4%", time: "All" },
+      { pokemon: "Pidgeot", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Skiploom", rate: "16%", time: "Morning, Day" },
+      { pokemon: "Gastrodon", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Jumpluff", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Noctowl", rate: "20%", time: "Night" },
+      { pokemon: "Gastrodon", rate: "15%", time: "Night" },
+      { pokemon: "Quagsire", rate: "10%", time: "Night" },
+      { pokemon: "Skiploom", rate: "6%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Kecleon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Tropius", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Drifblim", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Lopunny", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 15": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Nidorina", rate: "30%", time: "All" },
+      { pokemon: "Nidorino", rate: "30%", time: "All" },
+      { pokemon: "Chansey", rate: "2%", time: "All" },
+      { pokemon: "Skiploom", rate: "18%", time: "Morning, Day" },
+      { pokemon: "Pidgeot", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Gastrodon", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Jumpluff", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Quagsire", rate: "18%", time: "Night" },
+      { pokemon: "Noctowl", rate: "10%", time: "Night" },
+      { pokemon: "Gastrodon", rate: "10%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Kecleon", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Tropius", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Drifblim", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Lopunny", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 16": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Grimer", rate: "20%", time: "All" },
+      { pokemon: "Koffing", rate: "10%", time: "All" },
+      { pokemon: "Torkoal", rate: "10%", time: "All" },
+      { pokemon: "Slugma", rate: "5%", time: "All" },
+      { pokemon: "Houndour", rate: "5%", time: "All" },
+      { pokemon: "Fearow", rate: "30%", time: "Morning, Day" },
+      { pokemon: "Weezing", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Murkrow", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Weezing", rate: "20%", time: "Night" },
+      { pokemon: "Murkrow", rate: "10%", time: "Night" },
+      { pokemon: "Magcargo", rate: "5%", time: "Night" },
+      { pokemon: "Houndoom", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Swalot", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Weezing", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Skorupi", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Toxicroak", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 17": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Grimer", rate: "20%", time: "All" },
+      { pokemon: "Koffing", rate: "10%", time: "All" },
+      { pokemon: "Muk", rate: "5%", time: "All" },
+      { pokemon: "Houndour", rate: "2%", time: "All" },
+      { pokemon: "Fearow", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Torkoal", rate: "19%", time: "Morning, Day" },
+      { pokemon: "Slugma", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Glameow", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Weezing", rate: "4%", time: "Morning, Day" },
+      { pokemon: "Weezing", rate: "20%", time: "Night" },
+      { pokemon: "Slugma", rate: "15%", time: "Night" },
+      { pokemon: "Purugly", rate: "10%", time: "Night" },
+      { pokemon: "Torkoal", rate: "10%", time: "Night" },
+      { pokemon: "Magcargo", rate: "4%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Swalot", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Weezing", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Drapion", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Toxicroak", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 18": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Grimer", rate: "20%", time: "All" },
+      { pokemon: "Koffing", rate: "10%", time: "All" },
+      { pokemon: "Slugma", rate: "10%", time: "All" },
+      { pokemon: "Muk", rate: "5%", time: "All" },
+      { pokemon: "Torkoal", rate: "5%", time: "All" },
+      { pokemon: "Fearow", rate: "25%", time: "Morning, Day" },
+      { pokemon: "Glameow", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Weezing", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Purugly", rate: "20%", time: "Night" },
+      { pokemon: "Weezing", rate: "20%", time: "Night" },
+      { pokemon: "Glameow", rate: "5%", time: "Night" },
+      { pokemon: "Magcargo", rate: "5%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Swalot", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Weezing", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Drapion", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Toxicroak", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 19": {
+    region: "Kanto", type: "route",
+    fishing: [
+      { pokemon: "Krabby", rate: "45%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "40%", method: "Good Rod" },
+      { pokemon: "Corsola", rate: "10%", method: "Good Rod" },
+      { pokemon: "Clamperl", rate: "5%", method: "Good Rod" },
+      { pokemon: "Kingler", rate: "40%", method: "Super Rod" },
+      { pokemon: "Corsola", rate: "30%", method: "Super Rod" },
+      { pokemon: "Krabby", rate: "15%", method: "Super Rod" },
+      { pokemon: "Clamperl", rate: "10%", method: "Super Rod" },
+      { pokemon: "Staryu", rate: "5%", method: "Super Rod" },
+    ],
+    surfing: [
+      { pokemon: "Tentacruel", rate: "60%", time: "All" },
+      { pokemon: "Wailmer", rate: "30%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+      { pokemon: "Wailord", rate: "5%", time: "All" },
+    ],
+    rockSmash: [
+      { pokemon: "Kingler", rate: "90%", time: "All" },
+      { pokemon: "Krabby", rate: "10%", time: "All" },
+    ],
+  },
+  "Route 20": {
+    region: "Kanto", type: "route",
+    fishing: [
+      { pokemon: "Tentacool", rate: "40%", method: "Good Rod" },
+      { pokemon: "Shellder", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "15%", method: "Good Rod" },
+      { pokemon: "Carvanha", rate: "5%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Tentacruel", rate: "15%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "10%", method: "Super Rod" },
+      { pokemon: "Sharpedo", rate: "5%", method: "Super Rod" },
+    ],
+    surfing: [
+      { pokemon: "Tentacruel", rate: "60%", time: "All" },
+      { pokemon: "Wailmer", rate: "30%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+      { pokemon: "Dewgong", rate: "5%", time: "All" },
+    ],
+  },
+  "Route 21": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Tangela", rate: "40%", time: "All" },
+      { pokemon: "Mr. Mime", rate: "20%", time: "All" },
+      { pokemon: "Sudowoodo", rate: "20%", time: "All" },
+      { pokemon: "Tangrowth", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Swellow", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Tangrowth", rate: "20%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Tentacool", rate: "40%", method: "Good Rod" },
+      { pokemon: "Shellder", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "15%", method: "Good Rod" },
+      { pokemon: "Carvanha", rate: "5%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Tentacruel", rate: "15%", method: "Super Rod" },
+      { pokemon: "Sharpedo", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "5%", method: "Super Rod" },
+    ],
+    surfing: [
+      { pokemon: "Tentacruel", rate: "60%", time: "All" },
+      { pokemon: "Wailmer", rate: "30%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+      { pokemon: "Wailord", rate: "5%", time: "All" },
+    ],
+  },
+  "Route 22": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Arbok", rate: "10%", time: "All" },
+      { pokemon: "Primeape", rate: "10%", time: "All" },
+      { pokemon: "Rapidash", rate: "5%", time: "All" },
+      { pokemon: "Togetic", rate: "5%", time: "All" },
+      { pokemon: "Fearow", rate: "30%", time: "Morning" },
+      { pokemon: "Raticate", rate: "20%", time: "Morning" },
+      { pokemon: "Dodrio", rate: "10%", time: "Morning" },
+      { pokemon: "Swellow", rate: "10%", time: "Morning" },
+      { pokemon: "Fearow", rate: "30%", time: "Day" },
+      { pokemon: "Raticate", rate: "20%", time: "Day" },
+      { pokemon: "Dodrio", rate: "20%", time: "Day" },
+      { pokemon: "Raticate", rate: "40%", time: "Night" },
+      { pokemon: "Politoed", rate: "10%", time: "Night" },
+      { pokemon: "Slaking", rate: "10%", time: "Night" },
+    ],
+  },
+  "Route 24": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Alakazam", rate: "10%", time: "All" },
+      { pokemon: "Pelipper", rate: "4%", time: "All" },
+      { pokemon: "Weepinbell", rate: "35%", time: "Morning" },
+      { pokemon: "Lombre", rate: "30%", time: "Morning" },
+      { pokemon: "Venomoth", rate: "14%", time: "Morning" },
+      { pokemon: "Blastoise", rate: "7%", time: "Morning" },
+      { pokemon: "Weepinbell", rate: "30%", time: "Day" },
+      { pokemon: "Sunkern", rate: "30%", time: "Day" },
+      { pokemon: "Blastoise", rate: "12%", time: "Day" },
+      { pokemon: "Lombre", rate: "10%", time: "Day" },
+      { pokemon: "Sunflora", rate: "4%", time: "Day" },
+      { pokemon: "Venomoth", rate: "34%", time: "Night" },
+      { pokemon: "Gloom", rate: "20%", time: "Night" },
+      { pokemon: "Lombre", rate: "20%", time: "Night" },
+      { pokemon: "Blastoise", rate: "7%", time: "Night" },
+      { pokemon: "Weepinbell", rate: "5%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Goldeen", rate: "100%", method: "Old Rod" },
+      { pokemon: "Goldeen", rate: "40%", method: "Good Rod" },
+      { pokemon: "Corphish", rate: "40%", method: "Good Rod" },
+      { pokemon: "Staryu", rate: "15%", method: "Good Rod" },
+      { pokemon: "Finneon", rate: "5%", method: "Good Rod" },
+      { pokemon: "Seaking", rate: "40%", method: "Super Rod" },
+      { pokemon: "Corphish", rate: "30%", method: "Super Rod" },
+      { pokemon: "Staryu", rate: "15%", method: "Super Rod" },
+      { pokemon: "Crawdaunt", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lumineon", rate: "5%", method: "Super Rod" },
+    ],
+    radio: [
+      { pokemon: "Swampert", rate: "40%", method: "Hoenn Radio" },
+      { pokemon: "Empoleon", rate: "40%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Route 25": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Alakazam", rate: "10%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+      { pokemon: "Eevee", rate: "5%", time: "All" },
+      { pokemon: "Weepinbell", rate: "25%", time: "Morning" },
+      { pokemon: "Pidgeotto", rate: "20%", time: "Morning" },
+      { pokemon: "Lombre", rate: "20%", time: "Morning" },
+      { pokemon: "Pidgeot", rate: "10%", time: "Morning" },
+      { pokemon: "Venonat", rate: "5%", time: "Morning" },
+      { pokemon: "Weepinbell", rate: "25%", time: "Day" },
+      { pokemon: "Pidgeotto", rate: "25%", time: "Day" },
+      { pokemon: "Pidgeot", rate: "20%", time: "Day" },
+      { pokemon: "Lombre", rate: "10%", time: "Day" },
+      { pokemon: "Gloom", rate: "30%", time: "Night" },
+      { pokemon: "Venomoth", rate: "20%", time: "Night" },
+      { pokemon: "Lombre", rate: "15%", time: "Night" },
+      { pokemon: "Venonat", rate: "10%", time: "Night" },
+      { pokemon: "Weepinbell", rate: "5%", time: "Night" },
+    ],
+    fishing: [
+      { pokemon: "Goldeen", rate: "100%", method: "Old Rod" },
+      { pokemon: "Goldeen", rate: "90%", method: "Good Rod" },
+      { pokemon: "Seaking", rate: "10%", method: "Good Rod" },
+      { pokemon: "Seaking", rate: "100%", method: "Super Rod" },
+    ],
+  },
+  // ─── KANTO DUNGEONS ───
+  "Diglett's Cave": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Diglett", rate: "30%", time: "All" },
+      { pokemon: "Nosepass", rate: "5%", time: "All" },
+      { pokemon: "Trapinch", rate: "5%", time: "All" },
+      { pokemon: "Lairon", rate: "4%", time: "All" },
+      { pokemon: "Dugtrio", rate: "56%", time: "Morning, Day" },
+      { pokemon: "Dugtrio", rate: "54%", time: "Night" },
+      { pokemon: "Vibrava", rate: "2%", time: "Night" },
+    ],
+    radio: [
+      { pokemon: "Trapinch", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Cacturne", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Hippowdon", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Nosepass", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Mt. Moon": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Golbat", rate: "30%", time: "All" },
+      { pokemon: "Sandslash", rate: "20%", time: "All" },
+      { pokemon: "Lairon", rate: "10%", time: "All" },
+      { pokemon: "Graveler", rate: "10%", time: "All" },
+      { pokemon: "Golem", rate: "10%", time: "All" },
+      { pokemon: "Parasect", rate: "10%", time: "All" },
+      { pokemon: "Clefairy", rate: "5%", time: "All" },
+      { pokemon: "Clefable", rate: "5%", time: "Morning, Night" },
+      { pokemon: "Aggron", rate: "5%", time: "Day" },
+    ],
+    radio: [
+      { pokemon: "Sableye", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Mawile", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Lunatone", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Solrock", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Rock Tunnel": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Marowak", rate: "30-35%", time: "All (1F/B1F)" },
+      { pokemon: "Graveler", rate: "20%", time: "All" },
+      { pokemon: "Machoke", rate: "15%", time: "1F" },
+      { pokemon: "Golbat", rate: "10%", time: "All" },
+      { pokemon: "Golem", rate: "10%", time: "All" },
+      { pokemon: "Medicham", rate: "8-10%", time: "All" },
+      { pokemon: "Machamp", rate: "5%", time: "1F" },
+      { pokemon: "Kangaskhan", rate: "2-5%", time: "All" },
+      { pokemon: "Onix", rate: "10%", time: "B1F" },
+    ],
+    rockSmash: [
+      { pokemon: "Golem", rate: "90%", time: "All" },
+      { pokemon: "Graveler", rate: "10%", time: "All" },
+    ],
+  },
+  "Seafoam Islands": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Golbat", rate: "30-35%", time: "All floors" },
+      { pokemon: "Seel", rate: "10-20%", time: "B2F-B3F" },
+      { pokemon: "Golduck", rate: "20-21%", time: "B2F-B5F" },
+      { pokemon: "Dewgong", rate: "15-30%", time: "B2F-B5F" },
+      { pokemon: "Psyduck", rate: "5%", time: "B2F-B3F" },
+      { pokemon: "Sealeo", rate: "5%", time: "All floors" },
+      { pokemon: "Glalie", rate: "4-5%", time: "B3F-B5F" },
+      { pokemon: "Jynx", rate: "5-15%", time: "B4F-B5F" },
+      { pokemon: "Walrein", rate: "9%", time: "B5F" },
+      { pokemon: "Froslass", rate: "2%", time: "B5F" },
+    ],
+    surfing: [
+      { pokemon: "Seel", rate: "60%", time: "Bottom floors" },
+      { pokemon: "Seadra", rate: "30%", time: "Bottom floors" },
+      { pokemon: "Sealeo", rate: "10%", time: "Bottom floors" },
+    ],
+    radio: [
+      { pokemon: "Sealeo", rate: "20%", method: "Hoenn Radio (1F-B3F)" },
+      { pokemon: "Castform", rate: "20%", method: "Hoenn Radio" },
+      { pokemon: "Walrein", rate: "20%", method: "Hoenn Radio (B4F)" },
+      { pokemon: "Glalie", rate: "20%", method: "Sinnoh Radio" },
+      { pokemon: "Abomasnow", rate: "20%", method: "Sinnoh Radio" },
+    ],
+  },
+  "Cerulean Cave": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Parasect", rate: "20%", time: "1F, B1F" },
+      { pokemon: "Magneton", rate: "10%", time: "1F, B1F" },
+      { pokemon: "Ditto", rate: "10%", time: "All floors" },
+      { pokemon: "Electrode", rate: "5%", time: "All floors" },
+      { pokemon: "Wobbuffet", rate: "5%", time: "All floors" },
+      { pokemon: "Machamp", rate: "10-20%", time: "Morning, Day" },
+      { pokemon: "Golbat", rate: "10-30%", time: "All" },
+      { pokemon: "Primeape", rate: "10%", time: "1F Morning, Day" },
+      { pokemon: "Alakazam", rate: "20%", time: "B1F, B2F" },
+      { pokemon: "Cradily", rate: "5%", time: "1F" },
+      { pokemon: "Armaldo", rate: "5%", time: "1F" },
+      { pokemon: "Rampardos", rate: "5%", time: "B1F" },
+      { pokemon: "Bastiodon", rate: "5%", time: "B1F" },
+      { pokemon: "Omastar", rate: "5%", time: "B2F" },
+      { pokemon: "Kabutops", rate: "5%", time: "B2F" },
+      { pokemon: "Crobat", rate: "10%", time: "B2F" },
+    ],
+    surfing: [
+      { pokemon: "Golduck", rate: "60%", time: "1F" },
+      { pokemon: "Aerodactyl", rate: "40%", time: "1F" },
+      { pokemon: "Aerodactyl", rate: "61%", time: "B2F" },
+      { pokemon: "Golduck", rate: "39%", time: "B2F" },
+    ],
+    fishing: [
+      { pokemon: "Poliwag", rate: "40%", method: "Good Rod (1F)" },
+      { pokemon: "Poliwhirl", rate: "30%", method: "Good Rod (1F)" },
+      { pokemon: "Omanyte", rate: "15%", method: "Good Rod (1F)" },
+      { pokemon: "Kabuto", rate: "15%", method: "Good Rod (1F)" },
+      { pokemon: "Poliwrath", rate: "40%", method: "Super Rod (1F)" },
+      { pokemon: "Politoed", rate: "30%", method: "Super Rod (1F)" },
+      { pokemon: "Kabutops", rate: "15%", method: "Super Rod (1F)" },
+      { pokemon: "Omastar", rate: "15%", method: "Super Rod (1F)" },
+      { pokemon: "Kabuto", rate: "40%", method: "Good Rod (B2F)" },
+      { pokemon: "Omanyte", rate: "35%", method: "Good Rod (B2F)" },
+      { pokemon: "Poliwhirl", rate: "25%", method: "Good Rod (B2F)" },
+      { pokemon: "Omastar", rate: "40%", method: "Super Rod (B2F)" },
+      { pokemon: "Kabutops", rate: "30%", method: "Super Rod (B2F)" },
+      { pokemon: "Politoed", rate: "20%", method: "Super Rod (B2F)" },
+      { pokemon: "Poliwrath", rate: "5%", method: "Super Rod (B2F)" },
+    ],
+    rockSmash: [
+      { pokemon: "Golem", rate: "90%", time: "All" },
+      { pokemon: "Parasect", rate: "10%", time: "All" },
+    ],
+  },
+  "Cerulean City": {
+    region: "Kanto", type: "route",
+    surfing: [
+      { pokemon: "Surskit", rate: "60%", time: "All" },
+      { pokemon: "Goldeen", rate: "30%", time: "All" },
+      { pokemon: "Masquerain", rate: "5%", time: "All" },
+      { pokemon: "Seaking", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Goldeen", rate: "100%", method: "Old Rod" },
+      { pokemon: "Goldeen", rate: "40%", method: "Good Rod" },
+      { pokemon: "Corphish", rate: "40%", method: "Good Rod" },
+      { pokemon: "Staryu", rate: "15%", method: "Good Rod" },
+      { pokemon: "Finneon", rate: "5%", method: "Good Rod" },
+      { pokemon: "Seaking", rate: "40%", method: "Super Rod" },
+      { pokemon: "Corphish", rate: "30%", method: "Super Rod" },
+      { pokemon: "Staryu", rate: "15%", method: "Super Rod" },
+      { pokemon: "Crawdaunt", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lumineon", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Vermilion City": {
+    region: "Kanto", type: "route",
+    surfing: [
+      { pokemon: "Tentacool", rate: "60%", time: "All" },
+      { pokemon: "Wingull", rate: "30%", time: "All" },
+      { pokemon: "Tentacruel", rate: "5%", time: "All" },
+      { pokemon: "Pelipper", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Tentacool", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "30%", method: "Good Rod" },
+      { pokemon: "Shellder", rate: "15%", method: "Good Rod" },
+      { pokemon: "Carvanha", rate: "10%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "5%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Tentacruel", rate: "30%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "15%", method: "Super Rod" },
+      { pokemon: "Sharpedo", rate: "10%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "5%", method: "Super Rod" },
+    ],
+    rockSmash: [
+      { pokemon: "Dugtrio", rate: "90%", time: "All" },
+      { pokemon: "Shuckle", rate: "10%", time: "All" },
+    ],
+  },
+  "Fuchsia City": {
+    region: "Kanto", type: "route",
+    surfing: [
+      { pokemon: "Tentacool", rate: "60%", time: "All" },
+      { pokemon: "Wingull", rate: "35%", time: "All" },
+      { pokemon: "Surskit", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Corphish", rate: "40%", method: "Good Rod" },
+      { pokemon: "Barboach", rate: "30%", method: "Good Rod" },
+      { pokemon: "Magikarp", rate: "30%", method: "Good Rod" },
+      { pokemon: "Crawdaunt", rate: "40%", method: "Super Rod" },
+      { pokemon: "Gyarados", rate: "30%", method: "Super Rod" },
+      { pokemon: "Barboach", rate: "15%", method: "Super Rod" },
+      { pokemon: "Whiscash", rate: "15%", method: "Super Rod" },
+    ],
+  },
+  "Cinnabar Island": {
+    region: "Kanto", type: "route",
+    surfing: [
+      { pokemon: "Tentacruel", rate: "60%", time: "All" },
+      { pokemon: "Wingull", rate: "30%", time: "All" },
+      { pokemon: "Anorith", rate: "5%", time: "All" },
+      { pokemon: "Lileep", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Tentacool", rate: "85%", method: "Old Rod" },
+      { pokemon: "Lileep", rate: "10%", method: "Old Rod" },
+      { pokemon: "Anorith", rate: "5%", method: "Old Rod" },
+      { pokemon: "Anorith", rate: "40%", method: "Good Rod" },
+      { pokemon: "Lileep", rate: "35%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "15%", method: "Good Rod" },
+      { pokemon: "Shellder", rate: "5%", method: "Good Rod" },
+      { pokemon: "Lanturn", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Armaldo", rate: "15%", method: "Super Rod" },
+      { pokemon: "Cradily", rate: "15%", method: "Super Rod" },
+    ],
+  },
+  "Pallet Town": {
+    region: "Kanto", type: "route",
+    surfing: [
+      { pokemon: "Tentacruel", rate: "65%", time: "All" },
+      { pokemon: "Tentacool", rate: "30%", time: "All" },
+      { pokemon: "Wailmer", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Tentacool", rate: "40%", method: "Good Rod" },
+      { pokemon: "Shellder", rate: "40%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "15%", method: "Good Rod" },
+      { pokemon: "Carvanha", rate: "5%", method: "Good Rod" },
+      { pokemon: "Chinchou", rate: "40%", method: "Super Rod" },
+      { pokemon: "Shellder", rate: "30%", method: "Super Rod" },
+      { pokemon: "Tentacruel", rate: "15%", method: "Super Rod" },
+      { pokemon: "Lanturn", rate: "10%", method: "Super Rod" },
+      { pokemon: "Sharpedo", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Viridian City": {
+    region: "Kanto", type: "route",
+    surfing: [
+      { pokemon: "Poliwag", rate: "60%", time: "All" },
+      { pokemon: "Surskit", rate: "30%", time: "All" },
+      { pokemon: "Poliwhirl", rate: "5%", time: "All" },
+      { pokemon: "Masquerain", rate: "5%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Corphish", rate: "80%", method: "Good Rod" },
+      { pokemon: "Poliwag", rate: "20%", method: "Good Rod" },
+      { pokemon: "Crawdaunt", rate: "40%", method: "Super Rod" },
+      { pokemon: "Corphish", rate: "30%", method: "Super Rod" },
+      { pokemon: "Poliwhirl", rate: "25%", method: "Super Rod" },
+      { pokemon: "Gyarados", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Celadon City": {
+    region: "Kanto", type: "route",
+    surfing: [
+      { pokemon: "Grimer", rate: "60%", time: "All" },
+      { pokemon: "Corphish", rate: "30%", time: "All" },
+      { pokemon: "Crawdaunt", rate: "5%", time: "All" },
+      { pokemon: "Muk", rate: "5%", time: "All" },
+    ],
+  },
+  // ─── MT. SILVER ───
+  "Route 28": {
+    region: "Kanto", type: "route",
+    walking: [
+      { pokemon: "Donphan", rate: "20%", time: "All" },
+      { pokemon: "Tangela", rate: "20%", time: "All" },
+      { pokemon: "Ursaring", rate: "15%", time: "All" },
+      { pokemon: "Tangrowth", rate: "10%", time: "All" },
+      { pokemon: "Swellow", rate: "5%", time: "All" },
+      { pokemon: "Rapidash", rate: "25%", time: "Morning, Day" },
+      { pokemon: "Dodrio", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Rapidash", rate: "20%", time: "Night" },
+      { pokemon: "Sneasel", rate: "10%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Exterior)": {
+    region: "Kanto", type: "dungeon",
+    surfing: [
+      { pokemon: "Dragonair", rate: "90%", time: "All" },
+      { pokemon: "Lapras", rate: "10%", time: "All" },
+    ],
+    fishing: [
+      { pokemon: "Gyarados", rate: "70%", method: "Good Rod" },
+      { pokemon: "Dratini", rate: "20%", method: "Good Rod" },
+      { pokemon: "Dragonair", rate: "10%", method: "Good Rod" },
+      { pokemon: "Gyarados", rate: "95%", method: "Super Rod" },
+      { pokemon: "Dragonite", rate: "5%", method: "Super Rod" },
+    ],
+  },
+  "Mt. Silver (Piedmont)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Rapidash", rate: "30%", time: "All" },
+      { pokemon: "Tangrowth", rate: "25%", time: "All" },
+      { pokemon: "Donphan", rate: "15%", time: "All" },
+      { pokemon: "Tangela", rate: "10%", time: "All" },
+      { pokemon: "Ursaring", rate: "10%", time: "All" },
+      { pokemon: "Dodrio", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Sneasel", rate: "5%", time: "Night" },
+      { pokemon: "Weavile", rate: "5%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Hoarfrost)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Sneasel", rate: "20%", time: "All" },
+      { pokemon: "Abomasnow", rate: "20%", time: "All" },
+      { pokemon: "Shiftry", rate: "10%", time: "All" },
+      { pokemon: "Donphan", rate: "10%", time: "All" },
+      { pokemon: "Ursaring", rate: "10%", time: "All" },
+      { pokemon: "Piloswine", rate: "5%", time: "All" },
+      { pokemon: "Mamoswine", rate: "5%", time: "All" },
+      { pokemon: "Pupitar", rate: "4%", time: "All" },
+      { pokemon: "Tyranitar", rate: "1%", time: "All" },
+      { pokemon: "Weavile", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Golbat", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Mismagius", rate: "15%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Hearth)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Steelix", rate: "20%", time: "All" },
+      { pokemon: "Golem", rate: "14%", time: "All" },
+      { pokemon: "Magmortar", rate: "11%", time: "All" },
+      { pokemon: "Weavile", rate: "10%", time: "All" },
+      { pokemon: "Tyranitar", rate: "10%", time: "All" },
+      { pokemon: "Magcargo", rate: "5%", time: "All" },
+      { pokemon: "Arcanine", rate: "20%", time: "Morning, Day" },
+      { pokemon: "Golbat", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Ninetales", rate: "20%", time: "Night" },
+      { pokemon: "Mismagius", rate: "10%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Precipice)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Weavile", rate: "20%", time: "All" },
+      { pokemon: "Absol", rate: "20%", time: "All" },
+      { pokemon: "Steelix", rate: "15%", time: "All" },
+      { pokemon: "Ursaring", rate: "10%", time: "All" },
+      { pokemon: "Donphan", rate: "10%", time: "All" },
+      { pokemon: "Crobat", rate: "5%", time: "All" },
+      { pokemon: "Tyranitar", rate: "5%", time: "All" },
+      { pokemon: "Probopass", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Mismagius", rate: "15%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Reservoir)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Steelix", rate: "20%", time: "All" },
+      { pokemon: "Probopass", rate: "10%", time: "All" },
+      { pokemon: "Ursaring", rate: "10%", time: "All" },
+      { pokemon: "Donphan", rate: "10%", time: "All" },
+      { pokemon: "Golbat", rate: "5%", time: "All" },
+      { pokemon: "Golem", rate: "5%", time: "All" },
+      { pokemon: "Pupitar", rate: "5%", time: "All" },
+      { pokemon: "Quagsire", rate: "30%", time: "Morning, Day" },
+      { pokemon: "Golduck", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Mismagius", rate: "25%", time: "Night" },
+      { pokemon: "Quagsire", rate: "10%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Escarpment)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Golbat", rate: "20%", time: "All" },
+      { pokemon: "Steelix", rate: "30%", time: "All" },
+      { pokemon: "Ursaring", rate: "10%", time: "All" },
+      { pokemon: "Donphan", rate: "10%", time: "All" },
+      { pokemon: "Heracross", rate: "5%", time: "All" },
+      { pokemon: "Pupitar", rate: "5%", time: "All" },
+      { pokemon: "Golem", rate: "15%", time: "Morning, Day" },
+      { pokemon: "Gliscor", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Golem", rate: "10%", time: "Night" },
+      { pokemon: "Gliscor", rate: "10%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Hollow)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Golbat", rate: "20%", time: "All" },
+      { pokemon: "Steelix", rate: "20%", time: "All" },
+      { pokemon: "Exploud", rate: "5%", time: "All" },
+      { pokemon: "Pupitar", rate: "5%", time: "All" },
+      { pokemon: "Aggron", rate: "20%", time: "Morning" },
+      { pokemon: "Bronzong", rate: "10%", time: "Morning" },
+      { pokemon: "Glalie", rate: "10%", time: "Morning" },
+      { pokemon: "Quagsire", rate: "10%", time: "Morning" },
+      { pokemon: "Bronzong", rate: "20%", time: "Day" },
+      { pokemon: "Aggron", rate: "10%", time: "Day" },
+      { pokemon: "Glalie", rate: "10%", time: "Day" },
+      { pokemon: "Quagsire", rate: "10%", time: "Day" },
+      { pokemon: "Froslass", rate: "20%", time: "Night" },
+      { pokemon: "Aggron", rate: "10%", time: "Night" },
+      { pokemon: "Bronzong", rate: "10%", time: "Night" },
+      { pokemon: "Mismagius", rate: "10%", time: "Night" },
+    ],
+  },
+  "Mt. Silver (Catacombs)": {
+    region: "Kanto", type: "dungeon",
+    walking: [
+      { pokemon: "Golem", rate: "20%", time: "All" },
+      { pokemon: "Weavile", rate: "20%", time: "All" },
+      { pokemon: "Ursaring", rate: "10%", time: "All" },
+      { pokemon: "Donphan", rate: "10%", time: "All" },
+      { pokemon: "Steelix", rate: "10%", time: "All" },
+      { pokemon: "Abomasnow", rate: "5%", time: "All" },
+      { pokemon: "Golbat", rate: "4%", time: "All" },
+      { pokemon: "Pupitar", rate: "4%", time: "All" },
+      { pokemon: "Crobat", rate: "1%", time: "All" },
+      { pokemon: "Tyranitar", rate: "1%", time: "All" },
+      { pokemon: "Probopass", rate: "10%", time: "Morning, Day" },
+      { pokemon: "Dusknoir", rate: "5%", time: "Morning, Day" },
+      { pokemon: "Dusknoir", rate: "10%", time: "Night" },
+      { pokemon: "Mismagius", rate: "5%", time: "Night" },
+    ],
+  },
+};
 
-    function getAnimatedSpriteUrl(name) {
-      const cleanName = cleanPokemonNameForUrl(name);
-      if (!cleanName) return "";
-      return `https://play.pokemonshowdown.com/sprites/ani/${cleanName}.gif`;
-    }
+// ═══════════════════════════════════════════════════
+// Organize locations by region
+// ═══════════════════════════════════════════════════
+const REGIONS = {};
+Object.entries(ENCOUNTER_DATA).forEach(([name, data]) => {
+  const r = data.region || "Other";
+  if (!REGIONS[r]) REGIONS[r] = [];
+  REGIONS[r].push(name);
+});
 
-    function getPokemonId(name) {
-      const clean = cleanPokemonNameForUrl(name);
-      return clean; // PokeAPI uses similar clean names for fallback
-    }
+// ═══════════════════════════════════════════════════
+// COMPONENTS
+// ═══════════════════════════════════════════════════
 
-    // --- 3. TES DONNÉES (Raccourcies ici pour l'exemple de structure, mais on utilise tes données) ---
-    const ENCOUNTER_DATA = {
-      "Route 29": {
-        region: "Johto", type: "route",
-        walking: [
-          { pokemon: "Pidgey", rate: "50%", time: "Morning, Day" },
-          { pokemon: "Sentret", rate: "40%", time: "Morning, Day" },
-          { pokemon: "Hoppip", rate: "5%", time: "Morning, Day" },
-          { pokemon: "Rattata", rate: "5%", time: "Morning, Day" },
-          { pokemon: "Hoothoot", rate: "60%", time: "Night" },
-          { pokemon: "Rattata", rate: "35%", time: "Night" },
-          { pokemon: "Sentret", rate: "5%", time: "Night" },
-        ],
-        radio: [
-          { pokemon: "Poochyena", rate: "20%", method: "Hoenn Radio" },
-          { pokemon: "Swablu", rate: "20%", method: "Hoenn Radio" },
-          { pokemon: "Swablu", rate: "20%", method: "Sinnoh Radio" },
-          { pokemon: "Ralts", rate: "20%", method: "Sinnoh Radio" },
-        ],
-      },
-      "Route 30": {
-        region: "Johto", type: "route",
-        walking: [
-          { pokemon: "Caterpie", rate: "20%", time: "Morning, Day" },
-          { pokemon: "Weedle", rate: "20%", time: "Morning, Day" },
-          { pokemon: "Hoppip", rate: "10%", time: "Morning, Day" },
-          { pokemon: "Ledyba", rate: "25%", time: "Morning" },
-          { pokemon: "Pidgey", rate: "10%", time: "Morning" },
-          { pokemon: "Rattata", rate: "5%", time: "Morning" },
-          { pokemon: "Poliwag", rate: "5%", time: "Morning" },
-          { pokemon: "Spinarak", rate: "5%", time: "Morning" },
-          { pokemon: "Pidgey", rate: "30%", time: "Day" },
-          { pokemon: "Kakuna", rate: "5%", time: "Day" },
-          { pokemon: "Metapod", rate: "5%", time: "Day" },
-          { pokemon: "Ledyba", rate: "5%", time: "Day" },
-          { pokemon: "Spinarak", rate: "5%", time: "Day" },
-          { pokemon: "Hoothoot", rate: "30%", time: "Night" },
-          { pokemon: "Rattata", rate: "30%", time: "Night" },
-          { pokemon: "Spinarak", rate: "25%", time: "Night" },
-          { pokemon: "Poliwag", rate: "10%", time: "Night" },
-          { pokemon: "Ledyba", rate: "5%", time: "Night" },
-        ]
-      },
-      "Route 31": {
-        region: "Johto", type: "route",
-        walking: [
-          { pokemon: "Bellsprout", rate: "20%", time: "All" },
-          { pokemon: "Caterpie", rate: "20%", time: "Morning, Day" },
-          { pokemon: "Weedle", rate: "15%", time: "Morning, Day" }
-        ]
-      }
-      // Note: J'ai raccourci les données ici pour que tu puisses copier facilement. 
-      // Tu peux recoller ton gros bloc ENCOUNTER_DATA à la place de celui-ci si tu le souhaites !
-    };
+function TypeBadge({ type }) {
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "2px 10px",
+      borderRadius: "4px",
+      fontSize: "11px",
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+      color: "#fff",
+      background: TYPE_COLORS[type] || TYPE_COLORS.Normal,
+      lineHeight: "18px",
+    }}>{type}</span>
+  );
+}
 
-    const REGIONS = {};
-    Object.entries(ENCOUNTER_DATA).forEach(([name, data]) => {
-      const r = data.region || "Other";
-      if (!REGIONS[r]) REGIONS[r] = [];
-      REGIONS[r].push(name);
-    });
+function EncounterRow({ pokemon, rate, time, method }) {
+  const type = getType(pokemon);
+  return (
+    <tr style={{ borderBottom: "1px solid var(--border)" }}>
+      <td style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+        <img
+          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getPokemonId(pokemon)}.png`}
+          alt={pokemon}
+          style={{ width: 40, height: 40, imageRendering: "pixelated" }}
+          onError={(e) => { e.target.style.display = "none"; }}
+        />
+        <span style={{ fontWeight: 600, color: "var(--text)" }}>{pokemon}</span>
+      </td>
+      <td style={{ padding: "10px 14px" }}><TypeBadge type={type} /></td>
+      <td style={{ padding: "10px 14px", fontWeight: 700, color: "var(--accent)", fontFamily: "'JetBrains Mono', monospace" }}>{rate}</td>
+      <td style={{ padding: "10px 14px", color: "var(--text-dim)", fontSize: 13 }}>{time || method || "—"}</td>
+    </tr>
+  );
+}
 
-    // --- 4. COMPOSANTS REACT ---
-    function TypeBadge({ type }) {
-      return (
-        <span style={{
-          display: "inline-block", padding: "2px 10px", borderRadius: "4px",
-          fontSize: "11px", fontWeight: 700, textTransform: "uppercase",
-          color: "#fff", background: TYPE_COLORS[type] || TYPE_COLORS.Normal,
-        }}>{type}</span>
-      );
-    }
+function EncounterTable({ title, icon, encounters }) {
+  if (!encounters || encounters.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <h3 style={{
+        display: "flex", alignItems: "center", gap: 8,
+        fontSize: 16, fontWeight: 700, color: "var(--text)",
+        margin: "0 0 12px 0", padding: "8px 14px",
+        background: "var(--card-header)", borderRadius: "8px 8px 0 0",
+        borderBottom: "2px solid var(--accent)",
+      }}>
+        <span style={{ fontSize: 20 }}>{icon}</span> {title}
+      </h3>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ background: "var(--table-head)", textAlign: "left" }}>
+              <th style={{ padding: "8px 14px", fontWeight: 600, color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px" }}>Pokémon</th>
+              <th style={{ padding: "8px 14px", fontWeight: 600, color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px" }}>Type</th>
+              <th style={{ padding: "8px 14px", fontWeight: 600, color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px" }}>Rate</th>
+              <th style={{ padding: "8px 14px", fontWeight: 600, color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px" }}>Condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            {encounters.map((e, i) => <EncounterRow key={i} {...e} />)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
-    function EncounterRow({ pokemon, rate, time, method }) {
-      const type = getType(pokemon);
-      const animatedUrl = getAnimatedSpriteUrl(pokemon);
-      const staticId = getPokemonId(pokemon);
+function getPokemonId(name) {
+  const ids = {
+    Bulbasaur:1,Ivysaur:2,Venusaur:3,Charmander:4,Charmeleon:5,Charizard:6,Squirtle:7,Wartortle:8,Blastoise:9,
+    Caterpie:10,Metapod:11,Butterfree:12,Weedle:13,Kakuna:14,Beedrill:15,Pidgey:16,Pidgeotto:17,Pidgeot:18,
+    Rattata:19,Raticate:20,Spearow:21,Fearow:22,Ekans:23,Arbok:24,Pikachu:25,Raichu:26,Sandshrew:27,Sandslash:28,
+    NidoranF:29,Nidorina:30,Nidoqueen:31,NidoranM:32,Nidorino:33,Nidoking:34,Clefairy:35,Clefable:36,
+    Vulpix:37,Ninetales:38,Jigglypuff:39,Wigglytuff:40,Zubat:41,Golbat:42,Oddish:43,Gloom:44,Vileplume:45,
+    Paras:46,Parasect:47,Venonat:48,Venomoth:49,Diglett:50,Dugtrio:51,Meowth:52,Persian:53,Psyduck:54,Golduck:55,
+    Mankey:56,Primeape:57,Growlithe:58,Arcanine:59,Poliwag:60,Poliwhirl:61,Poliwrath:62,Abra:63,Kadabra:64,
+    Alakazam:65,Machop:66,Machoke:67,Machamp:68,Bellsprout:69,Weepinbell:70,Victreebel:71,Tentacool:72,Tentacruel:73,
+    Geodude:74,Graveler:75,Golem:76,Ponyta:77,Rapidash:78,Slowpoke:79,Slowbro:80,Magnemite:81,Magneton:82,
+    "Farfetch'd":83,Doduo:84,Dodrio:85,Seel:86,Dewgong:87,Grimer:88,Muk:89,Shellder:90,Cloyster:91,
+    Gastly:92,Haunter:93,Gengar:94,Onix:95,Drowzee:96,Hypno:97,Krabby:98,Kingler:99,Voltorb:100,Electrode:101,
+    Exeggcute:102,Exeggutor:103,Marowak:105,Hitmonlee:106,Hitmonchan:107,Lickitung:108,Koffing:109,Weezing:110,
+    Rhyhorn:111,Rhydon:112,Chansey:113,Tangela:114,Kangaskhan:115,Horsea:116,Seadra:117,Goldeen:118,Seaking:119,
+    Staryu:120,Starmie:121,"Mr. Mime":122,Scyther:123,Jynx:124,Electabuzz:125,Magmar:126,Pinsir:127,Tauros:128,
+    Magikarp:129,Gyarados:130,Lapras:131,Ditto:132,Eevee:133,Vaporeon:134,Jolteon:135,Flareon:136,Porygon:137,
+    Omanyte:138,Omastar:139,Kabuto:140,Kabutops:141,Aerodactyl:142,Snorlax:143,Dratini:147,Dragonair:148,Dragonite:149,
+    Chikorita:152,Bayleef:153,Meganium:154,Cyndaquil:155,Quilava:156,Typhlosion:157,Totodile:158,Croconaw:159,Feraligatr:160,
+    Sentret:161,Furret:162,Hoothoot:163,Noctowl:164,Ledyba:165,Ledian:166,Spinarak:167,Ariados:168,Crobat:169,
+    Chinchou:170,Lanturn:171,Pichu:172,Cleffa:173,Igglybuff:174,Togepi:175,Togetic:176,Natu:177,Xatu:178,
+    Mareep:179,Flaaffy:180,Ampharos:181,Bellossom:182,Marill:183,Azumarill:184,Sudowoodo:185,Hoppip:187,Skiploom:188,
+    Jumpluff:189,Aipom:190,Sunkern:191,Sunflora:192,Yanma:193,Wooper:194,Quagsire:195,Espeon:196,Umbreon:197,
+    Murkrow:198,Slowking:199,Misdreavus:200,Unown:201,Wobbuffet:202,Girafarig:203,Pineco:204,Forretress:205,
+    Dunsparce:206,Gligar:207,Steelix:208,Snubbull:209,Granbull:210,Qwilfish:211,Scizor:212,Shuckle:213,Heracross:214,
+    Sneasel:215,Teddiursa:216,Ursaring:217,Slugma:218,Magcargo:219,Swinub:220,Piloswine:221,Corsola:222,Remoraid:223,
+    Octillery:224,Delibird:225,Mantine:226,Skarmory:227,Houndour:228,Houndoom:229,Kingdra:230,Phanpy:231,Donphan:232,
+    Stantler:234,Smeargle:235,Tyrogue:236,Hitmontop:237,Miltank:241,Larvitar:246,Pupitar:247,Tyranitar:248,
+    Poochyena:261,Mightyena:262,Zigzagoon:263,Linoone:264,Wurmple:265,Beautifly:267,Dustox:269,
+    Lotad:270,Lombre:271,Ludicolo:272,Seedot:273,Nuzleaf:274,Shiftry:275,Swellow:277,
+    Surskit:283,Masquerain:284,Shroomish:285,Breloom:286,Slakoth:287,Vigoroth:288,Slaking:289,
+    Nincada:290,Ninjask:291,Shedinja:292,Whismur:293,Loudred:294,Exploud:295,
+    Makuhita:296,Hariyama:297,Skitty:300,Delcatty:301,Sableye:302,Mawile:303,
+    Aron:304,Lairon:305,Aggron:306,Meditite:307,Medicham:308,Electrike:309,Manectric:310,
+    Plusle:311,Minun:312,Volbeat:313,Illumise:314,Roselia:315,Gulpin:316,Swalot:317,
+    Carvanha:318,Sharpedo:319,Wailmer:320,Wailord:321,Numel:322,Camerupt:323,Torkoal:324,
+    Spoink:325,Grumpig:326,Spinda:327,Trapinch:328,Vibrava:329,Flygon:330,
+    Cacnea:331,Cacturne:332,Swablu:333,Altaria:334,Zangoose:335,Seviper:336,
+    Lunatone:337,Solrock:338,Barboach:339,Whiscash:340,Corphish:341,Crawdaunt:342,
+    Baltoy:343,Claydol:344,Lileep:345,Cradily:346,Anorith:347,Armaldo:348,
+    Feebas:349,Milotic:350,Castform:351,Kecleon:352,Shuppet:353,Banette:354,
+    Duskull:355,Dusclops:356,Tropius:357,Chimecho:358,Absol:359,
+    Snorunt:361,Glalie:362,Spheal:363,Sealeo:364,Walrein:365,Clamperl:366,
+    Huntail:367,Gorebyss:368,Relicanth:369,Luvdisc:370,Beldum:374,Metang:375,Metagross:376,
+    Shelgon:372,Salamence:373,
+    Turtwig:387,Grotle:388,Torterra:389,Chimchar:390,Monferno:391,Infernape:392,
+    Piplup:393,Prinplup:394,Empoleon:395,Staravia:397,Staraptor:398,Bidoof:399,Bibarel:400,
+    Kricketot:401,Kricketune:402,Shinx:403,Luxio:404,Luxray:405,Budew:406,Roserade:407,
+    Cranidos:408,Rampardos:409,Shieldon:410,Bastiodon:411,Burmy:412,Wormadam:413,Mothim:414,
+    Combee:415,Vespiquen:416,Pachirisu:417,Buizel:418,Floatzel:419,Cherubi:420,Cherrim:421,
+    Shellos:422,Gastrodon:423,Ambipom:424,Drifloon:425,Drifblim:426,Buneary:427,Lopunny:428,
+    Honchkrow:430,Glameow:431,Purugly:432,Chingling:433,Stunky:434,Skuntank:435,
+    Bronzor:436,Bronzong:437,Happiny:440,Chatot:441,Spiritomb:442,
+    Gible:443,Gabite:444,Garchomp:445,Munchlax:446,Riolu:447,Lucario:448,
+    Hippopotas:449,Hippowdon:450,Skorupi:451,Drapion:452,Croagunk:453,Toxicroak:454,
+    Carnivine:455,Finneon:456,Lumineon:457,Mantyke:458,Snover:459,Abomasnow:460,
+    Weavile:461,Magnezone:462,Electivire:466,Magmortar:467,Togekiss:468,
+    Yanmega:469,Leafeon:470,Glaceon:471,Gliscor:472,Mamoswine:473,
+    Porygon2:233,PorygonZ:474,Rhyperior:464,Tangrowth:465,
+    Probopass:476,Dusknoir:477,Froslass:478,Rotom:479,
+    Nosepass:299,Pelipper:279,Wingull:278,Mismagius:429,
+    Politoed:186,Kirlia:281,Ralts:280,Gardevoir:282,
+    Sceptile:254,Blaziken:257,Swampert:260,
+  };
+  return ids[name] || 0;
+}
 
-      return (
-        <tr style={{ borderBottom: "1px solid var(--border)", transition: "background 0.2s" }}>
-          <td style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: 15, minWidth: "220px" }}>
+// ═══════════════════════════════════════════════════
+// MAIN APP
+// ═══════════════════════════════════════════════════
+
+export default function App() {
+  const [selectedLocation, setSelectedLocation] = useState("Route 29");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [search, setSearch] = useState("");
+  const data = ENCOUNTER_DATA[selectedLocation];
+
+  const filteredRegions = {};
+  Object.entries(REGIONS).forEach(([region, locations]) => {
+    const filtered = locations.filter(l => l.toLowerCase().includes(search.toLowerCase()));
+    if (filtered.length) filteredRegions[region] = filtered;
+  });
+
+  return (
+    <div style={{
+      "--bg": "#0f1117", "--sidebar": "#161822", "--card": "#1c1f2e",
+      "--card-header": "#1a1d2d", "--border": "#2a2d3e", "--text": "#e4e6f0",
+      "--text-dim": "#8b8fa3", "--accent": "#f0c040", "--accent2": "#4a9eff",
+      "--table-head": "#14162280",
+      fontFamily: "'Nunito', 'Segoe UI', sans-serif",
+      background: "var(--bg)", color: "var(--text)", minHeight: "100vh",
+      display: "flex",
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+      {/* Sidebar */}
+      <aside style={{
+        width: sidebarOpen ? 260 : 0, minWidth: sidebarOpen ? 260 : 0,
+        background: "var(--sidebar)", borderRight: "1px solid var(--border)",
+        overflowY: "auto", overflowX: "hidden", transition: "all 0.25s ease",
+        height: "100vh", position: "sticky", top: 0,
+      }}>
+        <div style={{ padding: "20px 16px 12px" }}>
+          <h1 style={{
+            fontSize: 15, fontWeight: 800, color: "var(--accent)",
+            margin: 0, letterSpacing: "-0.3px",
+          }}>⚜ Refined Gold</h1>
+          <p style={{ fontSize: 11, color: "var(--text-dim)", margin: "4px 0 16px" }}>
+            Overhaul v4.2 — Wild Encounters
+          </p>
+          <input
+            type="text"
+            placeholder="Search location..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: "100%", padding: "8px 12px", border: "1px solid var(--border)",
+              borderRadius: 6, background: "var(--bg)", color: "var(--text)",
+              fontSize: 13, outline: "none", boxSizing: "border-box",
+            }}
+          />
+        </div>
+        {Object.entries(filteredRegions).map(([region, locs]) => (
+          <div key={region}>
             <div style={{
-              width: 50, height: 50, display: "flex", justifyContent: "center", alignItems: "center",
-              background: "rgba(255,255,255,0.03)", borderRadius: "6px", overflow: "hidden"
-            }}>
-              <img
-                src={animatedUrl}
-                alt={pokemon}
-                style={{ maxWidth: "100%", maxHeight: "100%", imageRendering: "auto" }}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = `https://play.pokemonshowdown.com/sprites/dex/${staticId}.png`;
-                  e.target.style.imageRendering = "pixelated";
-                }}
-              />
-            </div>
-            <span style={{ fontWeight: 600, color: "var(--text)", fontSize: "1.1rem" }}>{pokemon}</span>
-          </td>
-          <td style={{ padding: "10px 14px" }}><TypeBadge type={type} /></td>
-          <td style={{ padding: "10px 14px", fontWeight: 700, color: "var(--accent)", fontFamily: "'JetBrains Mono', monospace" }}>{rate}</td>
-          <td style={{ padding: "10px 14px", color: "var(--text-dim)", fontSize: 13 }}>{time || method || "—"}</td>
-        </tr>
-      );
-    }
-
-    function EncounterTable({ title, icon, encounters }) {
-      if (!encounters || encounters.length === 0) return null;
-      return (
-        <div style={{ marginBottom: 28 }}>
-          <h3 style={{
-            display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 700, color: "var(--text)",
-            margin: "0 0 12px 0", padding: "8px 14px", background: "var(--card-header)", borderRadius: "8px 8px 0 0",
-            borderBottom: "2px solid var(--accent)",
-          }}>
-            <span style={{ fontSize: 20 }}>{icon}</span> {title}
-          </h3>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-              <thead>
-                <tr style={{ background: "var(--table-head)", textAlign: "left" }}>
-                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Pokémon</th>
-                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Type</th>
-                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Taux</th>
-                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Condition</th>
-                </tr>
-              </thead>
-              <tbody>
-                {encounters.map((e, i) => <EncounterRow key={i} {...e} />)}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    function App() {
-      const [selectedLocation, setSelectedLocation] = useState(Object.keys(ENCOUNTER_DATA)[0]);
-      const [sidebarOpen, setSidebarOpen] = useState(true);
-      const [search, setSearch] = useState("");
-      const data = ENCOUNTER_DATA[selectedLocation];
-
-      const filteredRegions = {};
-      Object.entries(REGIONS).forEach(([region, locations]) => {
-        const filtered = locations.filter(l => l.toLowerCase().includes(search.toLowerCase()));
-        if (filtered.length) filteredRegions[region] = filtered;
-      });
-
-      return (
-        <div style={{
-          "--bg": "#0f1117", "--sidebar": "#161822", "--card": "#1c1f2e",
-          "--card-header": "#1a1d2d", "--border": "#2a2d3e", "--text": "#e4e6f0",
-          "--text-dim": "#8b8fa3", "--accent": "#f0c040", "--accent2": "#4a9eff",
-          "--table-head": "#14162280", background: "var(--bg)", color: "var(--text)", minHeight: "100vh", display: "flex",
-        }}>
-          <aside style={{ width: sidebarOpen ? 260 : 0, minWidth: sidebarOpen ? 260 : 0, background: "var(--sidebar)", borderRight: "1px solid var(--border)", overflowY: "auto", overflowX: "hidden", transition: "all 0.25s ease", height: "100vh", position: "sticky", top: 0 }}>
-            <div style={{ padding: "20px 16px 12px" }}>
-              <h1 style={{ fontSize: 15, fontWeight: 800, color: "var(--accent)", margin: 0 }}>⚜ Refined Gold</h1>
-              <input type="text" placeholder="Chercher une zone..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg)", color: "var(--text)", fontSize: 13, outline: "none", marginTop: 16 }} />
-            </div>
-            {Object.entries(filteredRegions).map(([region, locs]) => (
-              <div key={region}>
-                <div style={{ padding: "8px 16px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--accent2)", background: "rgba(74,158,255,0.06)" }}>{region}</div>
-                {locs.map(loc => (
-                  <button key={loc} onClick={() => setSelectedLocation(loc)} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 16px 9px 24px", border: "none", cursor: "pointer", background: selectedLocation === loc ? "rgba(240,192,64,0.1)" : "transparent", color: selectedLocation === loc ? "var(--accent)" : "var(--text-dim)", fontWeight: selectedLocation === loc ? 700 : 400, fontSize: 13, borderLeft: selectedLocation === loc ? "3px solid var(--accent)" : "3px solid transparent" }}>
-                    {ENCOUNTER_DATA[loc]?.type === "dungeon" ? "🏔 " : "🛤 "}{loc}
-                  </button>
-                ))}
-              </div>
+              padding: "8px 16px", fontSize: 11, fontWeight: 700,
+              textTransform: "uppercase", letterSpacing: "1px",
+              color: "var(--accent2)", background: "rgba(74,158,255,0.06)",
+            }}>{region}</div>
+            {locs.map(loc => (
+              <button key={loc} onClick={() => setSelectedLocation(loc)} style={{
+                display: "block", width: "100%", textAlign: "left",
+                padding: "9px 16px 9px 24px", border: "none", cursor: "pointer",
+                background: selectedLocation === loc ? "rgba(240,192,64,0.1)" : "transparent",
+                color: selectedLocation === loc ? "var(--accent)" : "var(--text-dim)",
+                fontWeight: selectedLocation === loc ? 700 : 400,
+                fontSize: 13, fontFamily: "inherit", transition: "all 0.15s",
+                borderLeft: selectedLocation === loc ? "3px solid var(--accent)" : "3px solid transparent",
+              }}>
+                {ENCOUNTER_DATA[loc]?.type === "dungeon" ? "🏔 " : "🛤 "}{loc}
+              </button>
             ))}
-          </aside>
+          </div>
+        ))}
+      </aside>
 
-          <main style={{ flex: 1, padding: "32px 40px", maxWidth: 900, minWidth: 0 }}>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ position: "fixed", top: 12, left: sidebarOpen ? 268 : 8, zIndex: 10, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-dim)", cursor: "pointer", padding: "6px 10px", fontSize: 16 }}>
-              {sidebarOpen ? "◀" : "▶"}
-            </button>
+      {/* Main content */}
+      <main style={{ flex: 1, padding: "32px 40px", maxWidth: 900, minWidth: 0 }}>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
+          position: "fixed", top: 12, left: sidebarOpen ? 268 : 8, zIndex: 10,
+          background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6,
+          color: "var(--text-dim)", cursor: "pointer", padding: "6px 10px", fontSize: 16,
+          transition: "left 0.25s ease",
+        }}>
+          {sidebarOpen ? "◀" : "▶"}
+        </button>
 
-            {data ? (
-              <>
-                <div style={{ marginBottom: 32 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: "var(--accent2)" }}>{data.region}</span>
-                  <h2 style={{ fontSize: 32, fontWeight: 800, margin: "4px 0 0", color: "var(--accent)" }}>{selectedLocation}</h2>
-                </div>
-                <div style={{ background: "var(--card)", borderRadius: 12, border: "1px solid var(--border)", padding: 24 }}>
-                  <EncounterTable title="Hautes Herbes / Marche" icon="🌿" encounters={data.walking} />
-                  <EncounterTable title="Surf" icon="🌊" encounters={data.surfing} />
-                  <EncounterTable title="Pêche" icon="🎣" encounters={data.fishing} />
-                  <EncounterTable title="Radio" icon="📻" encounters={data.radio} />
-                  <EncounterTable title="Éclate-Roc" icon="🪨" encounters={data.rockSmash} />
-                  <EncounterTable title="Coup d'Boule" icon="🌳" encounters={data.headbutt} />
-                </div>
-              </>
-            ) : <p>Sélectionnez une zone à gauche.</p>}
-          </main>
-        </div>
-      );
-    }
+        {data ? (
+          <>
+            <div style={{ marginBottom: 32 }}>
+              <span style={{
+                fontSize: 12, fontWeight: 700, textTransform: "uppercase",
+                letterSpacing: "1px", color: "var(--accent2)",
+              }}>{data.region} — {data.type === "dungeon" ? "Donjon" : "Route"}</span>
+              <h2 style={{
+                fontSize: 32, fontWeight: 800, margin: "4px 0 0",
+                background: "linear-gradient(135deg, var(--accent), #ff9f43)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}>{selectedLocation}</h2>
+            </div>
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
-</body>
-</html>
+            <div style={{
+              background: "var(--card)", borderRadius: 12,
+              border: "1px solid var(--border)", padding: 24,
+            }}>
+              <EncounterTable title="Tall Grass / Walking" icon="🌿" encounters={data.walking} />
+              <EncounterTable title="Surfing" icon="🌊" encounters={data.surfing} />
+              <EncounterTable title="Fishing" icon="🎣" encounters={data.fishing} />
+              <EncounterTable title="Radio Encounters" icon="📻" encounters={data.radio} />
+              <EncounterTable title="Rock Smash" icon="🪨" encounters={data.rockSmash} />
+              <EncounterTable title="Headbutt" icon="🌳" encounters={data.headbutt} />
+            </div>
+          </>
+        ) : (
+          <p style={{ color: "var(--text-dim)" }}>Sélectionnez une zone dans le menu.</p>
+        )}
+
+        <footer style={{
+          marginTop: 48, padding: "16px 0", borderTop: "1px solid var(--border)",
+          fontSize: 12, color: "var(--text-dim)", textAlign: "center",
+        }}>
+          Données issues du changelog Refined Gold Overhaul v4.2 par RefinedPlat.
+          <br/>Ceci est un outil communautaire non-officiel. Pokémon © Nintendo / Game Freak.
+        </footer>
+      </main>
+    </div>
+  );
+}
