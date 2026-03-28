@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refined Gold Overhaul Wiki</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    /* Scrollbar personnalisée */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #161822; }
+    ::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f0c040; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // --- 1. COULEURS ET TYPES ---
+    const TYPE_COLORS = {
+      Normal: "#A8A77A", Fire: "#EE8130", Water: "#6390F0", Electric: "#F7D02C",
+      Grass: "#7AC74C", Ice: "#96D9D6", Fighting: "#C22E28", Poison: "#A33EA1",
+      Ground: "#E2BF65", Flying: "#A98FF3", Psychic: "#F95587", Bug: "#A6B91A",
+      Rock: "#B6A136", Ghost: "#735797", Dragon: "#6F35FC", Dark: "#705746",
+      Steel: "#B7B7CE", Fairy: "#D685AD",
+    };
+
+    const POKEMON_TYPES = {
+      Butterfree:"Bug",Beedrill:"Bug",Caterpie:"Bug",Weedle:"Bug",Metapod:"Bug",Kakuna:"Bug",
+      Pidgey:"Flying",Pidgeotto:"Flying",Pidgeot:"Flying",Rattata:"Normal",Raticate:"Normal",
+      Spearow:"Flying",Fearow:"Flying",Ekans:"Poison",Arbok:"Poison",Pikachu:"Electric",
+      Raichu:"Electric",Sandshrew:"Ground",Sandslash:"Ground",NidoranF:"Poison",Nidorina:"Poison",
+      Nidoqueen:"Poison",NidoranM:"Poison",Nidorino:"Poison",Nidoking:"Poison",Clefairy:"Fairy",
+      Clefable:"Fairy",Vulpix:"Fire",Ninetales:"Fire",Jigglypuff:"Normal",Wigglytuff:"Normal",
+      Zubat:"Poison",Golbat:"Poison",Oddish:"Grass",Gloom:"Grass",Vileplume:"Grass",
+      Paras:"Bug",Parasect:"Bug",Venonat:"Bug",Venomoth:"Bug",Diglett:"Ground",Dugtrio:"Ground",
+      Meowth:"Normal",Persian:"Normal",Psyduck:"Water",Golduck:"Water",Mankey:"Fighting",
+      Primeape:"Fighting",Growlithe:"Fire",Arcanine:"Fire",Poliwag:"Water",Poliwhirl:"Water",
+      Poliwrath:"Water",Politoed:"Water",Abra:"Psychic",Kadabra:"Psychic",Alakazam:"Psychic",
+      Machop:"Fighting",Machoke:"Fighting",Machamp:"Fighting",Bellsprout:"Grass",Weepinbell:"Grass",
+      Victreebel:"Grass",Tentacool:"Water",Tentacruel:"Water",Geodude:"Rock",Graveler:"Rock",
+      Golem:"Rock",Ponyta:"Fire",Rapidash:"Fire",Slowpoke:"Psychic",Slowbro:"Psychic",
+      Magnemite:"Electric",Magneton:"Electric",Magnezone:"Electric","Farfetch'd":"Flying",
+      Farfetch_d:"Flying",Doduo:"Normal",Dodrio:"Normal",Seel:"Water",Dewgong:"Water",
+      Grimer:"Poison",Muk:"Poison",Shellder:"Water",Cloyster:"Water",Gastly:"Ghost",
+      Haunter:"Ghost",Gengar:"Ghost",Onix:"Rock",Drowzee:"Psychic",Hypno:"Psychic",
+      Krabby:"Water",Kingler:"Water",Voltorb:"Electric",Electrode:"Electric",Exeggcute:"Grass",
+      Exeggutor:"Grass",Marowak:"Ground",Hitmonchan:"Fighting",Hitmonlee:"Fighting",
+      Hitmontop:"Fighting",Lickitung:"Normal",Koffing:"Poison",Weezing:"Poison",Rhyhorn:"Ground",
+      Rhydon:"Ground",Rhyperior:"Ground",Chansey:"Normal",Tangela:"Grass",Tangrowth:"Grass",
+      Kangaskhan:"Normal",Horsea:"Water",Seadra:"Water",Kingdra:"Water",Goldeen:"Water",
+      Seaking:"Water",Staryu:"Water",Starmie:"Water","Mr. Mime":"Psychic",Scyther:"Bug",
+      Scizor:"Bug",Jynx:"Ice",Electabuzz:"Electric",Electivire:"Electric",Magmar:"Fire",
+      Magmortar:"Fire",Pinsir:"Bug",Tauros:"Normal",Magikarp:"Water",Gyarados:"Water",
+      Lapras:"Water",Ditto:"Normal",Eevee:"Normal",Vaporeon:"Water",Jolteon:"Electric",
+      Flareon:"Fire",Porygon:"Normal",Omanyte:"Rock",Omastar:"Rock",Kabuto:"Rock",
+      Kabutops:"Rock",Aerodactyl:"Rock",Snorlax:"Normal",Dratini:"Dragon",Dragonair:"Dragon",
+      Dragonite:"Dragon",Chikorita:"Grass",Bayleef:"Grass",Meganium:"Grass",Cyndaquil:"Fire",
+      Quilava:"Fire",Typhlosion:"Fire",Totodile:"Water",Croconaw:"Water",Feraligatr:"Water",
+      Sentret:"Normal",Furret:"Normal",Hoothoot:"Normal",Noctowl:"Normal",Ledyba:"Bug",
+      Ledian:"Bug",Spinarak:"Bug",Ariados:"Bug",Crobat:"Poison",Chinchou:"Water",Lanturn:"Water",
+      Pichu:"Electric",Cleffa:"Fairy",Igglybuff:"Normal",Togepi:"Fairy",Togetic:"Fairy",
+      Natu:"Psychic",Xatu:"Psychic",Mareep:"Electric",Flaaffy:"Electric",Ampharos:"Electric",
+      Bellossom:"Grass",Marill:"Water",Azumarill:"Water",Sudowoodo:"Rock",Hoppip:"Grass",
+      Skiploom:"Grass",Jumpluff:"Grass",Aipom:"Normal",Sunkern:"Grass",Sunflora:"Grass",
+      Yanma:"Bug",Wooper:"Water",Quagsire:"Water",Espeon:"Psychic",Umbreon:"Dark",
+      Murkrow:"Dark",Slowking:"Psychic",Misdreavus:"Ghost",Mismagius:"Ghost",Unown:"Psychic",
+      Wobbuffet:"Psychic",Girafarig:"Normal",Pineco:"Bug",Forretress:"Bug",Dunsparce:"Normal",
+      Gligar:"Ground",Gliscor:"Ground",Steelix:"Steel",Snubbull:"Fairy",Granbull:"Fairy",
+      Qwilfish:"Water",Shuckle:"Bug",Heracross:"Bug",Sneasel:"Dark",Weavile:"Dark",
+      Teddiursa:"Normal",Ursaring:"Normal",Slugma:"Fire",Magcargo:"Fire",Swinub:"Ice",
+      Piloswine:"Ice",Mamoswine:"Ice",Corsola:"Water",Remoraid:"Water",Octillery:"Water",
+      Delibird:"Ice",Mantine:"Water",Skarmory:"Steel",Houndour:"Dark",Houndoom:"Dark",
+      Phanpy:"Ground",Donphan:"Ground",Stantler:"Normal",Smeargle:"Normal",Tyrogue:"Fighting",
+      Miltank:"Normal",Larvitar:"Rock",Pupitar:"Rock",Tyranitar:"Rock",
+      Poochyena:"Dark",Mightyena:"Dark",Zigzagoon:"Normal",Linoone:"Normal",Wurmple:"Bug",
+      Beautifly:"Bug",Dustox:"Bug",Lotad:"Water",Lombre:"Water",Ludicolo:"Water",
+      Seedot:"Grass",Nuzleaf:"Grass",Shiftry:"Grass",Swellow:"Flying",Surskit:"Bug",
+      Masquerain:"Bug",Shroomish:"Grass",Breloom:"Grass",Slakoth:"Normal",Vigoroth:"Normal",
+      Slaking:"Normal",Nincada:"Bug",Ninjask:"Bug",Shedinja:"Bug",Whismur:"Normal",
+      Loudred:"Normal",Exploud:"Normal",Makuhita:"Fighting",Hariyama:"Fighting",
+      Skitty:"Normal",Delcatty:"Normal",Sableye:"Dark",Mawile:"Steel",Aron:"Steel",
+      Lairon:"Steel",Aggron:"Steel",Meditite:"Fighting",Medicham:"Fighting",Electrike:"Electric",
+      Manectric:"Electric",Plusle:"Electric",Minun:"Electric",Volbeat:"Bug",Illumise:"Bug",
+      Roselia:"Grass",Gulpin:"Poison",Swalot:"Poison",Carvanha:"Water",Sharpedo:"Water",
+      Wailmer:"Water",Wailord:"Water",Numel:"Fire",Camerupt:"Fire",Torkoal:"Fire",Spoink:"Psychic",
+      Grumpig:"Psychic",Spinda:"Normal",Trapinch:"Ground",Vibrava:"Ground",Flygon:"Ground",
+      Cacnea:"Grass",Cacturne:"Grass",Swablu:"Normal",Altaria:"Dragon",Zangoose:"Normal",
+      Seviper:"Poison",Lunatone:"Rock",Solrock:"Rock",Barboach:"Water",Whiscash:"Water",
+      Corphish:"Water",Crawdaunt:"Water",Baltoy:"Ground",Claydol:"Ground",Lileep:"Rock",
+      Cradily:"Rock",Anorith:"Rock",Armaldo:"Rock",Feebas:"Water",Milotic:"Water",
+      Castform:"Normal",Kecleon:"Normal",Shuppet:"Ghost",Banette:"Ghost",Duskull:"Ghost",
+      Dusclops:"Ghost",Tropius:"Grass",Chimecho:"Psychic",Absol:"Dark",
+      Snorunt:"Ice",Glalie:"Ice",Spheal:"Ice",Sealeo:"Ice",Walrein:"Ice",Clamperl:"Water",
+      Huntail:"Water",Gorebyss:"Water",Relicanth:"Water",Luvdisc:"Water",Beldum:"Steel",Metang:"Steel",Metagross:"Steel",
+      Shelgon:"Dragon",Salamence:"Dragon",Turtwig:"Grass",Grotle:"Grass",Torterra:"Grass",Chimchar:"Fire",Monferno:"Fire",Infernape:"Fire",
+      Piplup:"Water",Prinplup:"Water",Empoleon:"Water",Staravia:"Flying",Staraptor:"Flying",Bidoof:"Normal",Bibarel:"Normal",
+      Kricketot:"Bug",Kricketune:"Bug",Shinx:"Electric",Luxio:"Electric",Luxray:"Electric",Budew:"Grass",Roserade:"Grass",
+      Cranidos:"Rock",Rampardos:"Rock",Shieldon:"Rock",Bastiodon:"Rock",Burmy:"Bug",Wormadam:"Bug",Mothim:"Bug",
+      Combee:"Bug",Vespiquen:"Bug",Pachirisu:"Electric",Buizel:"Water",Floatzel:"Water",Cherubi:"Grass",Cherrim:"Grass",
+      Shellos:"Water",Gastrodon:"Water",Ambipom:"Normal",Drifloon:"Ghost",Drifblim:"Ghost",Buneary:"Normal",Lopunny:"Normal",
+      Honchkrow:"Dark",Glameow:"Normal",Purugly:"Normal",Chingling:"Psychic",Stunky:"Poison",Skuntank:"Poison",
+      Bronzor:"Steel",Bronzong:"Steel",Happiny:"Normal",Chatot:"Flying",Spiritomb:"Ghost",
+      Gible:"Dragon",Gabite:"Dragon",Garchomp:"Dragon",Munchlax:"Normal",Riolu:"Fighting",Lucario:"Fighting",
+      Hippopotas:"Ground",Hippowdon:"Ground",Skorupi:"Poison",Drapion:"Poison",Croagunk:"Poison",Toxicroak:"Poison",
+      Carnivine:"Grass",Finneon:"Water",Lumineon:"Water",Mantyke:"Water",Snover:"Grass",Abomasnow:"Grass",
+      Weavile:"Dark",Magnezone:"Electric",Electivire:"Electric",Magmortar:"Fire",Togekiss:"Fairy",
+      Yanmega:"Bug",Leafeon:"Grass",Glaceon:"Ice",Gliscor:"Ground",Mamoswine:"Ice",
+      Porygon2:"Normal",PorygonZ:"Normal",Rhyperior:"Ground",Tangrowth:"Grass",
+      Probopass:"Rock",Dusknoir:"Ghost",Froslass:"Ice",Rotom:"Electric",
+      Nosepass:"Rock",Pelipper:"Water",Wingull:"Water",Mismagius:"Ghost",
+      Politoed:"Water",Kirlia:"Psychic",Ralts:"Psychic",Gardevoir:"Psychic",
+      Sceptile:"Grass",Blaziken:"Fire",Swampert:"Water"
+    };
+
+    function getType(name) {
+      const clean = name.replace(/[^a-zA-Z]/g, "");
+      return POKEMON_TYPES[clean] || POKEMON_TYPES[name] || "Normal";
+    }
+
+    // --- 2. OUTILS POUR LES SPRITES ANIMÉS ---
+    function cleanPokemonNameForUrl(name) {
+      if (!name) return "";
+      return name.toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/[^a-z0-9]/g, "")
+        .replace("♀", "f")
+        .replace("♂", "m");
+    }
+
+    function getAnimatedSpriteUrl(name) {
+      const cleanName = cleanPokemonNameForUrl(name);
+      if (!cleanName) return "";
+      return `https://play.pokemonshowdown.com/sprites/ani/${cleanName}.gif`;
+    }
+
+    function getPokemonId(name) {
+      const clean = cleanPokemonNameForUrl(name);
+      return clean; // PokeAPI uses similar clean names for fallback
+    }
+
+    // --- 3. TES DONNÉES (Raccourcies ici pour l'exemple de structure, mais on utilise tes données) ---
+    const ENCOUNTER_DATA = {
+      "Route 29": {
+        region: "Johto", type: "route",
+        walking: [
+          { pokemon: "Pidgey", rate: "50%", time: "Morning, Day" },
+          { pokemon: "Sentret", rate: "40%", time: "Morning, Day" },
+          { pokemon: "Hoppip", rate: "5%", time: "Morning, Day" },
+          { pokemon: "Rattata", rate: "5%", time: "Morning, Day" },
+          { pokemon: "Hoothoot", rate: "60%", time: "Night" },
+          { pokemon: "Rattata", rate: "35%", time: "Night" },
+          { pokemon: "Sentret", rate: "5%", time: "Night" },
+        ],
+        radio: [
+          { pokemon: "Poochyena", rate: "20%", method: "Hoenn Radio" },
+          { pokemon: "Swablu", rate: "20%", method: "Hoenn Radio" },
+          { pokemon: "Swablu", rate: "20%", method: "Sinnoh Radio" },
+          { pokemon: "Ralts", rate: "20%", method: "Sinnoh Radio" },
+        ],
+      },
+      "Route 30": {
+        region: "Johto", type: "route",
+        walking: [
+          { pokemon: "Caterpie", rate: "20%", time: "Morning, Day" },
+          { pokemon: "Weedle", rate: "20%", time: "Morning, Day" },
+          { pokemon: "Hoppip", rate: "10%", time: "Morning, Day" },
+          { pokemon: "Ledyba", rate: "25%", time: "Morning" },
+          { pokemon: "Pidgey", rate: "10%", time: "Morning" },
+          { pokemon: "Rattata", rate: "5%", time: "Morning" },
+          { pokemon: "Poliwag", rate: "5%", time: "Morning" },
+          { pokemon: "Spinarak", rate: "5%", time: "Morning" },
+          { pokemon: "Pidgey", rate: "30%", time: "Day" },
+          { pokemon: "Kakuna", rate: "5%", time: "Day" },
+          { pokemon: "Metapod", rate: "5%", time: "Day" },
+          { pokemon: "Ledyba", rate: "5%", time: "Day" },
+          { pokemon: "Spinarak", rate: "5%", time: "Day" },
+          { pokemon: "Hoothoot", rate: "30%", time: "Night" },
+          { pokemon: "Rattata", rate: "30%", time: "Night" },
+          { pokemon: "Spinarak", rate: "25%", time: "Night" },
+          { pokemon: "Poliwag", rate: "10%", time: "Night" },
+          { pokemon: "Ledyba", rate: "5%", time: "Night" },
+        ]
+      },
+      "Route 31": {
+        region: "Johto", type: "route",
+        walking: [
+          { pokemon: "Bellsprout", rate: "20%", time: "All" },
+          { pokemon: "Caterpie", rate: "20%", time: "Morning, Day" },
+          { pokemon: "Weedle", rate: "15%", time: "Morning, Day" }
+        ]
+      }
+      // Note: J'ai raccourci les données ici pour que tu puisses copier facilement. 
+      // Tu peux recoller ton gros bloc ENCOUNTER_DATA à la place de celui-ci si tu le souhaites !
+    };
+
+    const REGIONS = {};
+    Object.entries(ENCOUNTER_DATA).forEach(([name, data]) => {
+      const r = data.region || "Other";
+      if (!REGIONS[r]) REGIONS[r] = [];
+      REGIONS[r].push(name);
+    });
+
+    // --- 4. COMPOSANTS REACT ---
+    function TypeBadge({ type }) {
+      return (
+        <span style={{
+          display: "inline-block", padding: "2px 10px", borderRadius: "4px",
+          fontSize: "11px", fontWeight: 700, textTransform: "uppercase",
+          color: "#fff", background: TYPE_COLORS[type] || TYPE_COLORS.Normal,
+        }}>{type}</span>
+      );
+    }
+
+    function EncounterRow({ pokemon, rate, time, method }) {
+      const type = getType(pokemon);
+      const animatedUrl = getAnimatedSpriteUrl(pokemon);
+      const staticId = getPokemonId(pokemon);
+
+      return (
+        <tr style={{ borderBottom: "1px solid var(--border)", transition: "background 0.2s" }}>
+          <td style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: 15, minWidth: "220px" }}>
+            <div style={{
+              width: 50, height: 50, display: "flex", justifyContent: "center", alignItems: "center",
+              background: "rgba(255,255,255,0.03)", borderRadius: "6px", overflow: "hidden"
+            }}>
+              <img
+                src={animatedUrl}
+                alt={pokemon}
+                style={{ maxWidth: "100%", maxHeight: "100%", imageRendering: "auto" }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://play.pokemonshowdown.com/sprites/dex/${staticId}.png`;
+                  e.target.style.imageRendering = "pixelated";
+                }}
+              />
+            </div>
+            <span style={{ fontWeight: 600, color: "var(--text)", fontSize: "1.1rem" }}>{pokemon}</span>
+          </td>
+          <td style={{ padding: "10px 14px" }}><TypeBadge type={type} /></td>
+          <td style={{ padding: "10px 14px", fontWeight: 700, color: "var(--accent)", fontFamily: "'JetBrains Mono', monospace" }}>{rate}</td>
+          <td style={{ padding: "10px 14px", color: "var(--text-dim)", fontSize: 13 }}>{time || method || "—"}</td>
+        </tr>
+      );
+    }
+
+    function EncounterTable({ title, icon, encounters }) {
+      if (!encounters || encounters.length === 0) return null;
+      return (
+        <div style={{ marginBottom: 28 }}>
+          <h3 style={{
+            display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 700, color: "var(--text)",
+            margin: "0 0 12px 0", padding: "8px 14px", background: "var(--card-header)", borderRadius: "8px 8px 0 0",
+            borderBottom: "2px solid var(--accent)",
+          }}>
+            <span style={{ fontSize: 20 }}>{icon}</span> {title}
+          </h3>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+              <thead>
+                <tr style={{ background: "var(--table-head)", textAlign: "left" }}>
+                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Pokémon</th>
+                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Type</th>
+                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Taux</th>
+                  <th style={{ padding: "8px 14px", color: "var(--text-dim)", fontSize: 12, textTransform: "uppercase" }}>Condition</th>
+                </tr>
+              </thead>
+              <tbody>
+                {encounters.map((e, i) => <EncounterRow key={i} {...e} />)}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [selectedLocation, setSelectedLocation] = useState(Object.keys(ENCOUNTER_DATA)[0]);
+      const [sidebarOpen, setSidebarOpen] = useState(true);
+      const [search, setSearch] = useState("");
+      const data = ENCOUNTER_DATA[selectedLocation];
+
+      const filteredRegions = {};
+      Object.entries(REGIONS).forEach(([region, locations]) => {
+        const filtered = locations.filter(l => l.toLowerCase().includes(search.toLowerCase()));
+        if (filtered.length) filteredRegions[region] = filtered;
+      });
+
+      return (
+        <div style={{
+          "--bg": "#0f1117", "--sidebar": "#161822", "--card": "#1c1f2e",
+          "--card-header": "#1a1d2d", "--border": "#2a2d3e", "--text": "#e4e6f0",
+          "--text-dim": "#8b8fa3", "--accent": "#f0c040", "--accent2": "#4a9eff",
+          "--table-head": "#14162280", background: "var(--bg)", color: "var(--text)", minHeight: "100vh", display: "flex",
+        }}>
+          <aside style={{ width: sidebarOpen ? 260 : 0, minWidth: sidebarOpen ? 260 : 0, background: "var(--sidebar)", borderRight: "1px solid var(--border)", overflowY: "auto", overflowX: "hidden", transition: "all 0.25s ease", height: "100vh", position: "sticky", top: 0 }}>
+            <div style={{ padding: "20px 16px 12px" }}>
+              <h1 style={{ fontSize: 15, fontWeight: 800, color: "var(--accent)", margin: 0 }}>⚜ Refined Gold</h1>
+              <input type="text" placeholder="Chercher une zone..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg)", color: "var(--text)", fontSize: 13, outline: "none", marginTop: 16 }} />
+            </div>
+            {Object.entries(filteredRegions).map(([region, locs]) => (
+              <div key={region}>
+                <div style={{ padding: "8px 16px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--accent2)", background: "rgba(74,158,255,0.06)" }}>{region}</div>
+                {locs.map(loc => (
+                  <button key={loc} onClick={() => setSelectedLocation(loc)} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 16px 9px 24px", border: "none", cursor: "pointer", background: selectedLocation === loc ? "rgba(240,192,64,0.1)" : "transparent", color: selectedLocation === loc ? "var(--accent)" : "var(--text-dim)", fontWeight: selectedLocation === loc ? 700 : 400, fontSize: 13, borderLeft: selectedLocation === loc ? "3px solid var(--accent)" : "3px solid transparent" }}>
+                    {ENCOUNTER_DATA[loc]?.type === "dungeon" ? "🏔 " : "🛤 "}{loc}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </aside>
+
+          <main style={{ flex: 1, padding: "32px 40px", maxWidth: 900, minWidth: 0 }}>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ position: "fixed", top: 12, left: sidebarOpen ? 268 : 8, zIndex: 10, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-dim)", cursor: "pointer", padding: "6px 10px", fontSize: 16 }}>
+              {sidebarOpen ? "◀" : "▶"}
+            </button>
+
+            {data ? (
+              <>
+                <div style={{ marginBottom: 32 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", color: "var(--accent2)" }}>{data.region}</span>
+                  <h2 style={{ fontSize: 32, fontWeight: 800, margin: "4px 0 0", color: "var(--accent)" }}>{selectedLocation}</h2>
+                </div>
+                <div style={{ background: "var(--card)", borderRadius: 12, border: "1px solid var(--border)", padding: 24 }}>
+                  <EncounterTable title="Hautes Herbes / Marche" icon="🌿" encounters={data.walking} />
+                  <EncounterTable title="Surf" icon="🌊" encounters={data.surfing} />
+                  <EncounterTable title="Pêche" icon="🎣" encounters={data.fishing} />
+                  <EncounterTable title="Radio" icon="📻" encounters={data.radio} />
+                  <EncounterTable title="Éclate-Roc" icon="🪨" encounters={data.rockSmash} />
+                  <EncounterTable title="Coup d'Boule" icon="🌳" encounters={data.headbutt} />
+                </div>
+              </>
+            ) : <p>Sélectionnez une zone à gauche.</p>}
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
